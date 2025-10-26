@@ -50,7 +50,7 @@ func (h *ReadHandler) GetAllVectors(w http.ResponseWriter, r *http.Request) {
 
 		var metadata map[string]string
 		if metaBytes, ok := metaEntries[id]; ok {
-			json.Unmarshal(metaBytes, &metadata)
+			_ = json.Unmarshal(metaBytes, &metadata)
 		}
 
 		vectors = append(vectors, StoredVector{
@@ -62,7 +62,7 @@ func (h *ReadHandler) GetAllVectors(w http.ResponseWriter, r *http.Request) {
 
 	resp := GetAllResponse{Vectors: vectors}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	_ = json.NewEncoder(w).Encode(resp)
 
 	fmt.Printf("Returned %d vectors with metadata\n", len(vectors))
 }

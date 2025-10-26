@@ -36,9 +36,8 @@ func Mmap(path string) (*MappedFile, error) {
 
 func (m *MappedFile) Close() error {
 	if err := syscall.Munmap(m.Data); err != nil {
-		m.File.Close()
+		_ = m.File.Close()
 		return err
 	}
-	syscall.Munmap(m.Data)
 	return m.File.Close()
 }

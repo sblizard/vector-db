@@ -46,7 +46,7 @@ func TestUpsertHandler_Insert(t *testing.T) {
 	}
 
 	var resp UpsertResponse
-	json.NewDecoder(w.Body).Decode(&resp)
+	_ = json.NewDecoder(w.Body).Decode(&resp)
 
 	if resp.Status != "success" {
 		t.Errorf("Expected status 'success', got '%s'", resp.Status)
@@ -84,7 +84,7 @@ func TestUpsertHandler_Update(t *testing.T) {
 	}
 
 	var resp UpsertResponse
-	json.NewDecoder(w2.Body).Decode(&resp)
+	_ = json.NewDecoder(w2.Body).Decode(&resp)
 
 	if resp.Message != "Vector updated successfully" {
 		t.Errorf("Expected update message, got '%s'", resp.Message)
@@ -186,7 +186,7 @@ func TestReadHandler_GetAllVectors_WithData(t *testing.T) {
 	}
 
 	var resp GetAllResponse
-	json.NewDecoder(w.Body).Decode(&resp)
+	_ = json.NewDecoder(w.Body).Decode(&resp)
 
 	if len(resp.Vectors) != len(vectors) {
 		t.Errorf("Expected %d vectors, got %d", len(vectors), len(resp.Vectors))

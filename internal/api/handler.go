@@ -21,7 +21,7 @@ func NewHandler(store *storage.MetaStore, layout *storage.Layout) *Handler {
 
 func (h *Handler) Health(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{"Status":"ok","Message":"Service is healthy","StatusCode":200}`))
+	_, _ = w.Write([]byte(`{"Status":"ok","Message":"Service is healthy","StatusCode":200}`))
 }
 
 func (h *Handler) Hello(w http.ResponseWriter, req *http.Request) {

@@ -82,7 +82,7 @@ func TestIntegration_UpsertAndRetrieve(t *testing.T) {
 	}
 
 	var getAllResp handlers.GetAllResponse
-	json.NewDecoder(resp.Body).Decode(&getAllResp)
+	_ = json.NewDecoder(resp.Body).Decode(&getAllResp)
 
 	if len(getAllResp.Vectors) != 1 {
 		t.Errorf("Expected 1 vector, got %d", len(getAllResp.Vectors))
@@ -130,7 +130,7 @@ func TestIntegration_MultipleVectors(t *testing.T) {
 	defer resp.Body.Close()
 
 	var getAllResp handlers.GetAllResponse
-	json.NewDecoder(resp.Body).Decode(&getAllResp)
+	_ = json.NewDecoder(resp.Body).Decode(&getAllResp)
 
 	if len(getAllResp.Vectors) != 3 {
 		t.Errorf("Expected 3 vectors, got %d", len(getAllResp.Vectors))
@@ -176,7 +176,7 @@ func TestIntegration_UpdateVector(t *testing.T) {
 	defer resp.Body.Close()
 
 	var getAllResp handlers.GetAllResponse
-	json.NewDecoder(resp.Body).Decode(&getAllResp)
+	_ = json.NewDecoder(resp.Body).Decode(&getAllResp)
 
 	if len(getAllResp.Vectors) != 1 {
 		t.Errorf("Expected 1 vector after update, got %d", len(getAllResp.Vectors))

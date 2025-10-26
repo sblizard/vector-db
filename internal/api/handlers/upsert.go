@@ -97,7 +97,7 @@ func (h *UpsertHandler) Upsert(w http.ResponseWriter, r *http.Request) {
 	resp := UpsertResponse{Status: "success", Message: message, StatusCode: statusCode}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
-	json.NewEncoder(w).Encode(resp)
+	_ = json.NewEncoder(w).Encode(resp)
 
 	fmt.Printf("Successfully upserted vector: ID=%s, Dim=%d, IsUpdate=%v\n", req.ID, len(req.Vector), isUpdate)
 }
