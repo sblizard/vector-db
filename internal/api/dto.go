@@ -18,11 +18,22 @@ type QueryRequest struct {
 }
 
 type QueryResponse struct {
-	Results []QueryResult `json:"results"`
+	Results []QueriedVector `json:"results"`
 }
 
-type QueryResult struct {
+type QueriedVector struct {
 	ID       string            `json:"id"`
 	Score    float32           `json:"score"`
+	Vector   []float32         `json:"vector"`
+	Metadata map[string]string `json:"metadata,omitempty"`
+}
+
+type GetAllResponse struct {
+	Vectors []StoredVector `json:"vectors"`
+}
+
+type StoredVector struct {
+	ID       string            `json:"id"`
+	Vector   []float32         `json:"vector"`
 	Metadata map[string]string `json:"metadata,omitempty"`
 }

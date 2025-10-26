@@ -8,6 +8,14 @@ type MetaStore struct {
 	DB *badger.DB
 }
 
+func NewMetaStore(path string) *MetaStore {
+	db, err := OpenMetaStore(path)
+	if err != nil {
+		panic(err)
+	}
+	return db
+}
+
 func OpenMetaStore(path string) (*MetaStore, error) {
 	opts := badger.DefaultOptions(path)
 	opts.Logger = nil
@@ -45,4 +53,24 @@ func (m *MetaStore) Delete(key string) error {
 	return m.DB.Update(func(txn *badger.Txn) error {
 		return txn.Delete([]byte(key))
 	})
+}
+
+func (m *MetaStore) GetAll() (map[string][]byte, error) {
+	result := make(map[string][]byte)
+	err := m.DB.View(func(txn *badger.Txn) error {
+		it := txn.NewIterator(badger.DefaultIteratorOptions)
+		defer it.Close()
+
+		for it.Rewind(); it.Valid(); it.Next() {
+			item := it.Item()
+			k := string(item.Key())
+			valCopy, err := item.ValueCopy(nil)
+			if err != nil {
+				return err
+			}
+			result[k] = valCopy
+		}
+		return nil
+	})
+	return result, err
 }

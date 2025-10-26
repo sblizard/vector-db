@@ -15,7 +15,7 @@ func main() {
 		log.Fatalf("Failed to load config: %v", err)
 	}
 
-	handler := api.NewHandler()
+	handler := api.NewHandler(cfg.Storage, cfg.Layout)
 	router := api.NewRouter(handler)
 
 	addr := fmt.Sprintf(":%d", cfg.Server.Port)

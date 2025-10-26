@@ -21,6 +21,50 @@ func AppendVector(path string, vector []float32) error {
 	return nil
 }
 
+// WriteVectorAt writes a vector at a specific byte position in the file
+func WriteVectorAt(path string, vector []float32, position int64) error {
+	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0644)
+	if err != nil {
+		return fmt.Errorf("failed to open vector file: %w", err)
+	}
+	defer f.Close()
+
+	// Seek to the position
+	if _, err := f.Seek(position, 0); err != nil {
+		return fmt.Errorf("failed to seek to position: %w", err)
+	}
+
+	// Write the vector
+	for _, val := range vector {
+		if err := binary.Write(f, binary.LittleEndian, val); err != nil {
+			return fmt.Errorf("failed to write vector data: %w", err)
+		}
+	}
+	return nil
+}
+
+// ReadVectorAt reads a vector from a specific byte position in the file
+func ReadVectorAt(path string, dim int, position int64) ([]float32, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open vector file: %w", err)
+	}
+	defer f.Close()
+
+	// Seek to the position
+	if _, err := f.Seek(position, 0); err != nil {
+		return nil, fmt.Errorf("failed to seek to position: %w", err)
+	}
+
+	// Read the vector
+	vector := make([]float32, dim)
+	if err := binary.Read(f, binary.LittleEndian, &vector); err != nil {
+		return nil, fmt.Errorf("failed to read vector data: %w", err)
+	}
+
+	return vector, nil
+}
+
 func LoadVectors(path string, dim int) ([][]float32, error) {
 	f, err := os.Open(path)
 	if err != nil {
