@@ -17,9 +17,11 @@ func main() {
 	fmt.Println("Loaded:", loaded)
 
 	meta, _ := storage.OpenMetaStore(layout.MetaDB())
-	defer meta.Close()
+	defer func() {
+		_ = meta.Close()
+	}()
 
-	meta.Put("vector_0", []byte("cluster_0"))
+	_ = meta.Put("vector_0", []byte("cluster_0"))
 	val, _ := meta.Get("vector_0")
 	fmt.Println("Metadata:", string(val))
 }
