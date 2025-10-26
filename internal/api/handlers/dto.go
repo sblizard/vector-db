@@ -1,4 +1,4 @@
-package api
+package handlers
 
 type UpsertRequest struct {
 	ID       string            `json:"id"`

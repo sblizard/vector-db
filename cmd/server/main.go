@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/sblizard/vector-db/internal/api"
+	"github.com/sblizard/vector-db/internal/api/handlers"
 	"github.com/sblizard/vector-db/internal/config"
 )
 
@@ -16,7 +17,10 @@ func main() {
 	}
 
 	handler := api.NewHandler(cfg.Storage, cfg.Layout)
-	router := api.NewRouter(handler)
+	upsertHandler := handlers.NewUpsertHandler(cfg.Storage, cfg.Layout)
+	readHandler := handlers.NewReadHandler(cfg.Storage, cfg.Layout)
+
+	router := handlers.NewRouter(handler, upsertHandler, readHandler)
 
 	addr := fmt.Sprintf(":%d", cfg.Server.Port)
 	fmt.Printf("Server running on %s\n", addr)
