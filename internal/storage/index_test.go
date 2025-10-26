@@ -7,7 +7,7 @@ import (
 func TestPutAndGetIndex(t *testing.T) {
 	tmpDir := t.TempDir()
 	store := NewMetaStore(tmpDir)
-	defer store.Close()
+	defer func() { _ = store.Close() }()
 
 	index := VectorIndex{
 		Position: 1024,
@@ -35,7 +35,7 @@ func TestPutAndGetIndex(t *testing.T) {
 func TestDeleteIndex(t *testing.T) {
 	tmpDir := t.TempDir()
 	store := NewMetaStore(tmpDir)
-	defer store.Close()
+	defer func() { _ = store.Close() }()
 
 	index := VectorIndex{Position: 512, Dim: 64}
 	id := "vec_to_delete"
@@ -59,7 +59,7 @@ func TestDeleteIndex(t *testing.T) {
 func TestGetAllIndices(t *testing.T) {
 	tmpDir := t.TempDir()
 	store := NewMetaStore(tmpDir)
-	defer store.Close()
+	defer func() { _ = store.Close() }()
 
 	indices := map[string]VectorIndex{
 		"vec1": {Position: 0, Dim: 128},
@@ -98,7 +98,7 @@ func TestGetAllIndices(t *testing.T) {
 func TestGetNextPosition(t *testing.T) {
 	tmpDir := t.TempDir()
 	store := NewMetaStore(tmpDir)
-	defer store.Close()
+	defer func() { _ = store.Close() }()
 
 	// Empty store should return 0
 	pos, err := store.GetNextPosition(128)
@@ -143,7 +143,7 @@ func TestGetNextPosition(t *testing.T) {
 func TestGetIndexNonExistent(t *testing.T) {
 	tmpDir := t.TempDir()
 	store := NewMetaStore(tmpDir)
-	defer store.Close()
+	defer func() { _ = store.Close() }()
 
 	_, err := store.GetIndex("nonexistent_vector")
 	if err == nil {

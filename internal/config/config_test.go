@@ -69,7 +69,7 @@ func TestLoadConfigFromFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to open config file: %v", err)
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	var cfg Config
 	decoder := json.NewDecoder(file)
@@ -112,7 +112,7 @@ func TestLoadConfigInvalidJSON(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to open config file: %v", err)
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	var cfg Config
 	decoder := json.NewDecoder(file)

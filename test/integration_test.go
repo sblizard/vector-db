@@ -27,7 +27,7 @@ func setupTestServer(t *testing.T) (*httptest.Server, func()) {
 
 	cleanup := func() {
 		server.Close()
-		store.Close()
+		_ = store.Close()
 	}
 
 	return server, cleanup
@@ -41,7 +41,7 @@ func TestIntegration_HealthEndpoint(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Health check failed: %v", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("Expected status %d, got %d", http.StatusOK, resp.StatusCode)
@@ -64,7 +64,7 @@ func TestIntegration_UpsertAndRetrieve(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Upsert request failed: %v", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusCreated {
 		t.Errorf("Expected status %d for insert, got %d", http.StatusCreated, resp.StatusCode)
@@ -75,7 +75,7 @@ func TestIntegration_UpsertAndRetrieve(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Get vectors request failed: %v", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("Expected status %d, got %d", http.StatusOK, resp.StatusCode)
@@ -119,7 +119,7 @@ func TestIntegration_MultipleVectors(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Failed to insert vector %s: %v", vec.ID, err)
 		}
-		resp.Body.Close()
+		_ = resp.Body.Close()
 	}
 
 	// Retrieve all
@@ -127,7 +127,7 @@ func TestIntegration_MultipleVectors(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to get vectors: %v", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	var getAllResp handlers.GetAllResponse
 	_ = json.NewDecoder(resp.Body).Decode(&getAllResp)
@@ -149,7 +149,7 @@ func TestIntegration_UpdateVector(t *testing.T) {
 	}
 	body, _ := json.Marshal(upsertReq)
 	resp, _ := http.Post(server.URL+"/upsert", "application/json", bytes.NewBuffer(body))
-	resp.Body.Close()
+	_ = resp.Body.Close()
 
 	// Update
 	updateReq := handlers.UpsertRequest{
@@ -162,7 +162,7 @@ func TestIntegration_UpdateVector(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Update request failed: %v", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("Expected status %d for update, got %d", http.StatusOK, resp.StatusCode)
@@ -173,7 +173,7 @@ func TestIntegration_UpdateVector(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Request failed: %v", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	var getAllResp handlers.GetAllResponse
 	_ = json.NewDecoder(resp.Body).Decode(&getAllResp)
@@ -220,7 +220,7 @@ func TestIntegration_ErrorHandling(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Request failed: %v", err)
 			}
-			defer resp.Body.Close()
+			defer func() { _ = resp.Body.Close() }()
 
 			if resp.StatusCode != tt.expectedStatus {
 				t.Errorf("Expected status %d, got %d", tt.expectedStatus, resp.StatusCode)
@@ -237,7 +237,7 @@ func TestIntegration_EmptyDatabase(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Request failed: %v", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusNotFound {
 		t.Errorf("Expected status %d for empty database, got %d", http.StatusNotFound, resp.StatusCode)
@@ -248,7 +248,7 @@ func BenchmarkUpsert(b *testing.B) {
 	tmpDir := b.TempDir()
 	store := storage.NewMetaStore(tmpDir)
 	layout := storage.NewLayout(tmpDir)
-	defer store.Close()
+	defer func() { _ = store.Close() }()
 
 	healthHandler := api.NewHandler(store, layout)
 	upsertHandler := handlers.NewUpsertHandler(store, layout)
@@ -267,6 +267,6 @@ func BenchmarkUpsert(b *testing.B) {
 		}
 		body, _ := json.Marshal(upsertReq)
 		resp, _ := http.Post(server.URL+"/upsert", "application/json", bytes.NewBuffer(body))
-		resp.Body.Close()
+		_ = resp.Body.Close()
 	}
 }

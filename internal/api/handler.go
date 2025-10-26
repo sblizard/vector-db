@@ -25,13 +25,13 @@ func (h *Handler) Health(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Hello(w http.ResponseWriter, req *http.Request) {
-	fmt.Fprint(w, "Hello, World!")
+	_, _ = fmt.Fprint(w, "Hello, World!")
 }
 
 func (h *Handler) Headers(w http.ResponseWriter, req *http.Request) {
 	for name, headers := range req.Header {
 		for _, h := range headers {
-			fmt.Fprintf(w, "%v: %v\n", name, h)
+			_, _ = fmt.Fprintf(w, "%v: %v\n", name, h)
 		}
 	}
 }

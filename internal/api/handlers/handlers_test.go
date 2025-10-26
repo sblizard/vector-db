@@ -19,7 +19,7 @@ func setupTestHandlers(t *testing.T) (*UpsertHandler, *ReadHandler, func()) {
 	readHandler := NewReadHandler(store, layout)
 
 	cleanup := func() {
-		store.Close()
+		_ = store.Close()
 	}
 
 	return upsertHandler, readHandler, cleanup

@@ -11,7 +11,7 @@ func AppendVector(path string, vector []float32) error {
 	if err != nil {
 		return fmt.Errorf("failed to open vector file: %w", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	for _, val := range vector {
 		if err := binary.Write(f, binary.LittleEndian, val); err != nil {
@@ -26,7 +26,7 @@ func WriteVectorAt(path string, vector []float32, position int64) error {
 	if err != nil {
 		return fmt.Errorf("failed to open vector file: %w", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	if _, err := f.Seek(position, 0); err != nil {
 		return fmt.Errorf("failed to seek to position: %w", err)
@@ -45,7 +45,7 @@ func ReadVectorAt(path string, dim int, position int64) ([]float32, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to open vector file: %w", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	if _, err := f.Seek(position, 0); err != nil {
 		return nil, fmt.Errorf("failed to seek to position: %w", err)
@@ -64,7 +64,7 @@ func LoadVectors(path string, dim int) ([][]float32, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to open vector file: %w", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	stat, _ := f.Stat()
 	totalFloats := int(stat.Size()) / 4

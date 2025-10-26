@@ -46,7 +46,7 @@ func Load(path string) (Config, error) {
 		fmt.Printf("Config file not found, using defaults: %v\n", err)
 		return cfg, nil
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	decoder := json.NewDecoder(file)
 	if err := decoder.Decode(&cfg); err != nil {

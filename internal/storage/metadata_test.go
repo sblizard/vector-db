@@ -7,7 +7,7 @@ import (
 func TestMetaStorePutGet(t *testing.T) {
 	tmpDir := t.TempDir()
 	store := NewMetaStore(tmpDir)
-	defer store.Close()
+	defer func() { _ = store.Close() }()
 
 	key := "test_key"
 	value := []byte("test_value")
@@ -32,7 +32,7 @@ func TestMetaStorePutGet(t *testing.T) {
 func TestMetaStoreDelete(t *testing.T) {
 	tmpDir := t.TempDir()
 	store := NewMetaStore(tmpDir)
-	defer store.Close()
+	defer func() { _ = store.Close() }()
 
 	key := "test_key"
 	value := []byte("test_value")
@@ -59,7 +59,7 @@ func TestMetaStoreDelete(t *testing.T) {
 func TestMetaStoreGetAll(t *testing.T) {
 	tmpDir := t.TempDir()
 	store := NewMetaStore(tmpDir)
-	defer store.Close()
+	defer func() { _ = store.Close() }()
 
 	entries := map[string][]byte{
 		"key1": []byte("value1"),
@@ -102,7 +102,7 @@ func TestMetaStoreGetAll(t *testing.T) {
 func TestMetaStoreGetNonExistent(t *testing.T) {
 	tmpDir := t.TempDir()
 	store := NewMetaStore(tmpDir)
-	defer store.Close()
+	defer func() { _ = store.Close() }()
 
 	_, err := store.Get("nonexistent_key")
 	if err == nil {

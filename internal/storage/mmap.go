@@ -18,13 +18,13 @@ func Mmap(path string) (*MappedFile, error) {
 
 	stat, err := f.Stat()
 	if err != nil {
-		f.Close()
+		_ = f.Close()
 		return nil, err
 	}
 
 	data, err := syscall.Mmap(int(f.Fd()), 0, int(stat.Size()), syscall.PROT_READ, syscall.MAP_SHARED)
 	if err != nil {
-		f.Close()
+		_ = f.Close()
 		return nil, err
 	}
 

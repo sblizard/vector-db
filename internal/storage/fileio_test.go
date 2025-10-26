@@ -143,10 +143,10 @@ func TestLoadVectorsMisaligned(t *testing.T) {
 
 	// Write 5 floats (not divisible by 3)
 	f, _ := os.Create(vecFile)
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	for _, v := range []float32{1.0, 2.0, 3.0, 4.0, 5.0} {
-		AppendVector(vecFile, []float32{v})
+		_ = AppendVector(vecFile, []float32{v})
 	}
 
 	// Should fail with dimension 3
