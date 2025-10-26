@@ -1,12 +1,14 @@
-package storage
+package storage_test
 
 import (
 	"testing"
+
+	"github.com/sblizard/vector-db/internal/storage"
 )
 
 func TestMetaStorePutGet(t *testing.T) {
 	tmpDir := t.TempDir()
-	store := NewMetaStore(tmpDir)
+	store := storage.NewMetaStore(tmpDir)
 	defer func() { _ = store.Close() }()
 
 	key := "test_key"
@@ -31,7 +33,7 @@ func TestMetaStorePutGet(t *testing.T) {
 
 func TestMetaStoreDelete(t *testing.T) {
 	tmpDir := t.TempDir()
-	store := NewMetaStore(tmpDir)
+	store := storage.NewMetaStore(tmpDir)
 	defer func() { _ = store.Close() }()
 
 	key := "test_key"
@@ -58,7 +60,7 @@ func TestMetaStoreDelete(t *testing.T) {
 
 func TestMetaStoreGetAll(t *testing.T) {
 	tmpDir := t.TempDir()
-	store := NewMetaStore(tmpDir)
+	store := storage.NewMetaStore(tmpDir)
 	defer func() { _ = store.Close() }()
 
 	entries := map[string][]byte{
@@ -101,7 +103,7 @@ func TestMetaStoreGetAll(t *testing.T) {
 
 func TestMetaStoreGetNonExistent(t *testing.T) {
 	tmpDir := t.TempDir()
-	store := NewMetaStore(tmpDir)
+	store := storage.NewMetaStore(tmpDir)
 	defer func() { _ = store.Close() }()
 
 	_, err := store.Get("nonexistent_key")

@@ -1,12 +1,14 @@
-package storage
+package storage_test
 
 import (
 	"testing"
+
+	"github.com/sblizard/vector-db/internal/storage"
 )
 
 func TestNewLayout(t *testing.T) {
 	baseDir := "/test/data"
-	layout := NewLayout(baseDir)
+	layout := storage.NewLayout(baseDir)
 
 	if layout.BasePath != baseDir {
 		t.Errorf("Expected BasePath %s, got %s", baseDir, layout.BasePath)
@@ -15,7 +17,7 @@ func TestNewLayout(t *testing.T) {
 
 func TestVectorFile(t *testing.T) {
 	baseDir := "/test/data"
-	layout := NewLayout(baseDir)
+	layout := storage.NewLayout(baseDir)
 
 	tests := []struct {
 		partition int
@@ -36,7 +38,7 @@ func TestVectorFile(t *testing.T) {
 
 func TestMetaDB(t *testing.T) {
 	baseDir := "/test/data"
-	layout := NewLayout(baseDir)
+	layout := storage.NewLayout(baseDir)
 
 	expected := "/test/data/metadata.db"
 	result := layout.MetaDB()

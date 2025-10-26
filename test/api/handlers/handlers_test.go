@@ -1,4 +1,4 @@
-package handlers
+package handlers_test
 
 import (
 	"bytes"
@@ -7,16 +7,17 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/sblizard/vector-db/internal/api/handlers"
 	"github.com/sblizard/vector-db/internal/storage"
 )
 
-func setupTestHandlers(t *testing.T) (*UpsertHandler, *ReadHandler, func()) {
+func setupTestHandlers(t *testing.T) (*handlers.UpsertHandler, *handlers.ReadHandler, func()) {
 	tmpDir := t.TempDir()
 	store := storage.NewMetaStore(tmpDir)
 	layout := storage.NewLayout(tmpDir)
 
-	upsertHandler := NewUpsertHandler(store, layout)
-	readHandler := NewReadHandler(store, layout)
+	upsertHandler := handlers.NewUpsertHandler(store, layout)
+	readHandler := handlers.NewReadHandler(store, layout)
 
 	cleanup := func() {
 		_ = store.Close()
@@ -29,7 +30,7 @@ func TestUpsertHandler_Insert(t *testing.T) {
 	upsertHandler, _, cleanup := setupTestHandlers(t)
 	defer cleanup()
 
-	req := UpsertRequest{
+	req := handlers.UpsertRequest{
 		ID:       "vec1",
 		Vector:   []float32{1.0, 2.0, 3.0},
 		Metadata: map[string]string{"type": "test"},
@@ -45,7 +46,7 @@ func TestUpsertHandler_Insert(t *testing.T) {
 		t.Errorf("Expected status %d, got %d", http.StatusCreated, w.Code)
 	}
 
-	var resp UpsertResponse
+	var resp handlers.UpsertResponse
 	_ = json.NewDecoder(w.Body).Decode(&resp)
 
 	if resp.Status != "success" {
@@ -58,7 +59,7 @@ func TestUpsertHandler_Update(t *testing.T) {
 	defer cleanup()
 
 	// First insert
-	req1 := UpsertRequest{
+	req1 := handlers.UpsertRequest{
 		ID:       "vec1",
 		Vector:   []float32{1.0, 2.0, 3.0},
 		Metadata: map[string]string{"type": "test"},
@@ -69,7 +70,7 @@ func TestUpsertHandler_Update(t *testing.T) {
 	upsertHandler.Upsert(w1, httpReq1)
 
 	// Then update
-	req2 := UpsertRequest{
+	req2 := handlers.UpsertRequest{
 		ID:       "vec1",
 		Vector:   []float32{10.0, 20.0, 30.0},
 		Metadata: map[string]string{"type": "updated"},
@@ -83,7 +84,7 @@ func TestUpsertHandler_Update(t *testing.T) {
 		t.Errorf("Expected status %d for update, got %d", http.StatusOK, w2.Code)
 	}
 
-	var resp UpsertResponse
+	var resp handlers.UpsertResponse
 	_ = json.NewDecoder(w2.Body).Decode(&resp)
 
 	if resp.Message != "Vector updated successfully" {
@@ -109,7 +110,7 @@ func TestUpsertHandler_MissingID(t *testing.T) {
 	upsertHandler, _, cleanup := setupTestHandlers(t)
 	defer cleanup()
 
-	req := UpsertRequest{
+	req := handlers.UpsertRequest{
 		ID:     "",
 		Vector: []float32{1.0, 2.0, 3.0},
 	}
@@ -129,7 +130,7 @@ func TestUpsertHandler_EmptyVector(t *testing.T) {
 	upsertHandler, _, cleanup := setupTestHandlers(t)
 	defer cleanup()
 
-	req := UpsertRequest{
+	req := handlers.UpsertRequest{
 		ID:     "vec1",
 		Vector: []float32{},
 	}
@@ -164,7 +165,7 @@ func TestReadHandler_GetAllVectors_WithData(t *testing.T) {
 	defer cleanup()
 
 	// Insert test vectors
-	vectors := []UpsertRequest{
+	vectors := []handlers.UpsertRequest{
 		{ID: "vec1", Vector: []float32{1.0, 2.0}, Metadata: map[string]string{"label": "a"}},
 		{ID: "vec2", Vector: []float32{3.0, 4.0}, Metadata: map[string]string{"label": "b"}},
 	}
@@ -185,7 +186,7 @@ func TestReadHandler_GetAllVectors_WithData(t *testing.T) {
 		t.Errorf("Expected status %d, got %d", http.StatusOK, w.Code)
 	}
 
-	var resp GetAllResponse
+	var resp handlers.GetAllResponse
 	_ = json.NewDecoder(w.Body).Decode(&resp)
 
 	if len(resp.Vectors) != len(vectors) {

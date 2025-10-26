@@ -1,23 +1,25 @@
-package config
+package config_test
 
 import (
 	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/sblizard/vector-db/internal/config"
 )
 
 func TestDefaultConfig(t *testing.T) {
 	// Note: We can't fully test DefaultConfig() because it initializes storage
 	// Just test that the struct values are correct
-	cfg := Config{
+	cfg := config.Config{
 		Dim:          128,
 		NumSubspaces: 16,
 		TopK:         10,
 		TopL:         2,
 		DataPath:     "./data",
 		DBPath:       "./data/metadata.db",
-		Server:       ServerConfig{Port: 8080},
+		Server:       config.ServerConfig{Port: 8080},
 	}
 
 	if cfg.Dim != 128 {
@@ -71,7 +73,7 @@ func TestLoadConfigFromFile(t *testing.T) {
 	}
 	defer func() { _ = file.Close() }()
 
-	var cfg Config
+	var cfg config.Config
 	decoder := json.NewDecoder(file)
 	if err := decoder.Decode(&cfg); err != nil {
 		t.Fatalf("Failed to decode config: %v", err)
@@ -114,7 +116,7 @@ func TestLoadConfigInvalidJSON(t *testing.T) {
 	}
 	defer func() { _ = file.Close() }()
 
-	var cfg Config
+	var cfg config.Config
 	decoder := json.NewDecoder(file)
 	err = decoder.Decode(&cfg)
 	if err == nil {

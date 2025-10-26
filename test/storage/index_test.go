@@ -1,15 +1,17 @@
-package storage
+package storage_test
 
 import (
 	"testing"
+
+	"github.com/sblizard/vector-db/internal/storage"
 )
 
 func TestPutAndGetIndex(t *testing.T) {
 	tmpDir := t.TempDir()
-	store := NewMetaStore(tmpDir)
+	store := storage.NewMetaStore(tmpDir)
 	defer func() { _ = store.Close() }()
 
-	index := VectorIndex{
+	index := storage.VectorIndex{
 		Position: 1024,
 		Dim:      128,
 	}
@@ -34,10 +36,10 @@ func TestPutAndGetIndex(t *testing.T) {
 
 func TestDeleteIndex(t *testing.T) {
 	tmpDir := t.TempDir()
-	store := NewMetaStore(tmpDir)
+	store := storage.NewMetaStore(tmpDir)
 	defer func() { _ = store.Close() }()
 
-	index := VectorIndex{Position: 512, Dim: 64}
+	index := storage.VectorIndex{Position: 512, Dim: 64}
 	id := "vec_to_delete"
 
 	err := store.PutIndex(id, index)
@@ -58,10 +60,10 @@ func TestDeleteIndex(t *testing.T) {
 
 func TestGetAllIndices(t *testing.T) {
 	tmpDir := t.TempDir()
-	store := NewMetaStore(tmpDir)
+	store := storage.NewMetaStore(tmpDir)
 	defer func() { _ = store.Close() }()
 
-	indices := map[string]VectorIndex{
+	indices := map[string]storage.VectorIndex{
 		"vec1": {Position: 0, Dim: 128},
 		"vec2": {Position: 512, Dim: 128},
 		"vec3": {Position: 1024, Dim: 256},
@@ -97,7 +99,7 @@ func TestGetAllIndices(t *testing.T) {
 
 func TestGetNextPosition(t *testing.T) {
 	tmpDir := t.TempDir()
-	store := NewMetaStore(tmpDir)
+	store := storage.NewMetaStore(tmpDir)
 	defer func() { _ = store.Close() }()
 
 	// Empty store should return 0
@@ -110,7 +112,7 @@ func TestGetNextPosition(t *testing.T) {
 	}
 
 	// Add first vector (128 dims = 512 bytes)
-	err = store.PutIndex("vec1", VectorIndex{Position: 0, Dim: 128})
+	err = store.PutIndex("vec1", storage.VectorIndex{Position: 0, Dim: 128})
 	if err != nil {
 		t.Fatalf("PutIndex failed: %v", err)
 	}
@@ -125,7 +127,7 @@ func TestGetNextPosition(t *testing.T) {
 	}
 
 	// Add second vector
-	err = store.PutIndex("vec2", VectorIndex{Position: 512, Dim: 64})
+	err = store.PutIndex("vec2", storage.VectorIndex{Position: 512, Dim: 64})
 	if err != nil {
 		t.Fatalf("PutIndex failed: %v", err)
 	}
@@ -142,7 +144,7 @@ func TestGetNextPosition(t *testing.T) {
 
 func TestGetIndexNonExistent(t *testing.T) {
 	tmpDir := t.TempDir()
-	store := NewMetaStore(tmpDir)
+	store := storage.NewMetaStore(tmpDir)
 	defer func() { _ = store.Close() }()
 
 	_, err := store.GetIndex("nonexistent_vector")

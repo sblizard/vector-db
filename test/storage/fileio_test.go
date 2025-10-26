@@ -1,9 +1,11 @@
-package storage
+package storage_test
 
 import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/sblizard/vector-db/internal/storage"
 )
 
 func TestAppendVector(t *testing.T) {
@@ -12,7 +14,7 @@ func TestAppendVector(t *testing.T) {
 
 	vector := []float32{1.0, 2.0, 3.0, 4.0}
 
-	err := AppendVector(vecFile, vector)
+	err := storage.AppendVector(vecFile, vector)
 	if err != nil {
 		t.Fatalf("AppendVector failed: %v", err)
 	}
@@ -23,7 +25,7 @@ func TestAppendVector(t *testing.T) {
 	}
 
 	// Load and verify
-	loaded, err := LoadVectors(vecFile, len(vector))
+	loaded, err := storage.LoadVectors(vecFile, len(vector))
 	if err != nil {
 		t.Fatalf("LoadVectors failed: %v", err)
 	}
@@ -45,20 +47,20 @@ func TestWriteVectorAt(t *testing.T) {
 
 	// Write first vector
 	vector1 := []float32{1.0, 2.0, 3.0}
-	err := AppendVector(vecFile, vector1)
+	err := storage.AppendVector(vecFile, vector1)
 	if err != nil {
 		t.Fatalf("AppendVector failed: %v", err)
 	}
 
 	// Update vector at position 0
 	vector2 := []float32{10.0, 20.0, 30.0}
-	err = WriteVectorAt(vecFile, vector2, 0)
+	err = storage.WriteVectorAt(vecFile, vector2, 0)
 	if err != nil {
 		t.Fatalf("WriteVectorAt failed: %v", err)
 	}
 
 	// Verify update
-	loaded, err := ReadVectorAt(vecFile, 3, 0)
+	loaded, err := storage.ReadVectorAt(vecFile, 3, 0)
 	if err != nil {
 		t.Fatalf("ReadVectorAt failed: %v", err)
 	}
@@ -82,14 +84,14 @@ func TestReadVectorAt(t *testing.T) {
 	}
 
 	for _, vec := range vectors {
-		err := AppendVector(vecFile, vec)
+		err := storage.AppendVector(vecFile, vec)
 		if err != nil {
 			t.Fatalf("AppendVector failed: %v", err)
 		}
 	}
 
 	// Read second vector (at position 8 bytes)
-	loaded, err := ReadVectorAt(vecFile, 2, 8)
+	loaded, err := storage.ReadVectorAt(vecFile, 2, 8)
 	if err != nil {
 		t.Fatalf("ReadVectorAt failed: %v", err)
 	}
@@ -113,13 +115,13 @@ func TestLoadVectors(t *testing.T) {
 	}
 
 	for _, vec := range vectors {
-		err := AppendVector(vecFile, vec)
+		err := storage.AppendVector(vecFile, vec)
 		if err != nil {
 			t.Fatalf("AppendVector failed: %v", err)
 		}
 	}
 
-	loaded, err := LoadVectors(vecFile, 3)
+	loaded, err := storage.LoadVectors(vecFile, 3)
 	if err != nil {
 		t.Fatalf("LoadVectors failed: %v", err)
 	}
@@ -146,11 +148,11 @@ func TestLoadVectorsMisaligned(t *testing.T) {
 	defer func() { _ = f.Close() }()
 
 	for _, v := range []float32{1.0, 2.0, 3.0, 4.0, 5.0} {
-		_ = AppendVector(vecFile, []float32{v})
+		_ = storage.AppendVector(vecFile, []float32{v})
 	}
 
 	// Should fail with dimension 3
-	_, err := LoadVectors(vecFile, 3)
+	_, err := storage.LoadVectors(vecFile, 3)
 	if err == nil {
 		t.Fatal("Expected error for misaligned vector file, got nil")
 	}
