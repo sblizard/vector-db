@@ -14,7 +14,7 @@ func NewHandler() *Handler {
 
 func (h *Handler) Health(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{"status":"ok"}`))
+	w.Write([]byte(`{"Status":"ok","Message":"Service is healthy","StatusCode":200}`))
 }
 
 func (h *Handler) Upsert(w http.ResponseWriter, r *http.Request) {
@@ -26,7 +26,7 @@ func (h *Handler) Upsert(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Printf("Received upsert: ID=%s, VectorDim=%d\n", req.ID, len(req.Vector))
 
-	resp := UpsertResponse{Status: "success", Message: "vector received"}
+	resp := UpsertResponse{Status: "success", Message: "vector received", StatusCode: 201}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)
 }

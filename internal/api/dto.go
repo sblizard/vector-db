@@ -7,8 +7,9 @@ type UpsertRequest struct {
 }
 
 type UpsertResponse struct {
-	Status  string `json:"status"`
-	Message string `json:"message,omitempty"`
+	Status     string `json:"status"`
+	Message    string `json:"message,omitempty"`
+	StatusCode int    `json:"status_code,omitempty"`
 }
 
 type QueryRequest struct {
