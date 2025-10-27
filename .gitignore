@@ -33,3 +33,7 @@ go.work.sum
 
 data/*
 internal/config/data/*
+
+# Air temporary files
+tmp/
+build-errors.log
