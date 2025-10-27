@@ -464,7 +464,7 @@ func TestDeleteHandler_DeleteAllVectors_Empty(t *testing.T) {
 	deleteHandler.DeleteAllVectorsHandler(w, httpReq)
 
 	if w.Code != http.StatusOK {
-		t.Errorf("Expected status %d for deleting empty store, got %d", http.StatusOK, w.Code)
+		t.Errorf("Expected status %d for deleting empty store, got %d. Error: %s", http.StatusOK, w.Code, w.Body.String())
 	}
 
 	var resp handlers.DeleteResponse

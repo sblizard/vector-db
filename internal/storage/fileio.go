@@ -93,8 +93,11 @@ func LoadVectors(path string, dim int) ([][]float32, error) {
 
 // DeleteAllVectors truncates the vector file to remove all vectors.
 func DeleteAllVectors(path string) error {
-	err := os.Truncate(path, 0)
-	if err != nil {
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return nil
+	}
+
+	if err := os.Truncate(path, 0); err != nil {
 		return fmt.Errorf("failed to truncate vector file: %w", err)
 	}
 	return nil
