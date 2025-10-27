@@ -20,8 +20,9 @@ func main() {
 	upsertHandler := handlers.NewUpsertHandler(cfg.Engine)
 	readHandler := handlers.NewReadHandler(cfg.Engine)
 	deleteHandler := handlers.NewDeleteHandler(cfg.Engine)
+	searchHandler := handlers.NewSearchHandler(cfg.Engine)
 
-	router := handlers.NewRouter(handler, upsertHandler, readHandler, deleteHandler)
+	router := handlers.NewRouter(handler, upsertHandler, readHandler, deleteHandler, searchHandler)
 
 	addr := fmt.Sprintf(":%d", cfg.Server.Port)
 	fmt.Printf("Server running on %s\n", addr)

@@ -44,3 +44,8 @@ type DeleteResponse struct {
 	Message    string `json:"message"`
 	StatusCode int    `json:"status_code,omitempty"`
 }
+
+type SearchRequest struct {
+	Vector []float32 `json:"vector"`
+	TopK   int       `json:"top_k"`
+}
