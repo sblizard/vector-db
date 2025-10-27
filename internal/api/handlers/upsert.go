@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/sblizard/vector-db/internal/math"
 	"github.com/sblizard/vector-db/internal/storage"
 )
@@ -29,8 +30,7 @@ func (h *UpsertHandler) Upsert(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if req.ID == "" {
-		http.Error(w, "Vector ID is required", http.StatusBadRequest)
-		return
+		req.ID = uuid.New().String()
 	}
 
 	if len(req.Vector) == 0 {
