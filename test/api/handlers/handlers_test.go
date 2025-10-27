@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/sblizard/vector-db/internal/api/handlers"
+	"github.com/sblizard/vector-db/internal/engine"
 	"github.com/sblizard/vector-db/internal/storage"
 )
 
@@ -15,9 +16,10 @@ func setupTestHandlers(t *testing.T) (*handlers.UpsertHandler, *handlers.ReadHan
 	tmpDir := t.TempDir()
 	store := storage.NewMetaStore(tmpDir)
 	layout := storage.NewLayout(tmpDir)
+	engine := engine.NewEngine(store, layout)
 
-	upsertHandler := handlers.NewUpsertHandler(store, layout)
-	readHandler := handlers.NewReadHandler(store, layout)
+	upsertHandler := handlers.NewUpsertHandler(engine)
+	readHandler := handlers.NewReadHandler(engine)
 
 	cleanup := func() {
 		_ = store.Close()
@@ -162,8 +164,15 @@ func TestReadHandler_GetAllVectors_Empty(t *testing.T) {
 
 	readHandler.GetAllVectors(w, httpReq)
 
-	if w.Code != http.StatusNotFound {
-		t.Errorf("Expected status %d for empty store, got %d", http.StatusNotFound, w.Code)
+	if w.Code != http.StatusOK {
+		t.Errorf("Expected status %d for empty store, got %d", http.StatusOK, w.Code)
+	}
+
+	var resp handlers.GetAllResponse
+	_ = json.NewDecoder(w.Body).Decode(&resp)
+
+	if len(resp.Vectors) != 0 {
+		t.Errorf("Expected empty vector array, got %d vectors", len(resp.Vectors))
 	}
 }
 

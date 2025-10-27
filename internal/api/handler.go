@@ -4,18 +4,16 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/sblizard/vector-db/internal/storage"
+	"github.com/sblizard/vector-db/internal/engine"
 )
 
 type Handler struct {
-	storage *storage.MetaStore
-	layout  *storage.Layout
+	engine *engine.Engine
 }
 
-func NewHandler(store *storage.MetaStore, layout *storage.Layout) *Handler {
+func NewHandler(engine *engine.Engine) *Handler {
 	return &Handler{
-		storage: store,
-		layout:  layout,
+		engine: engine,
 	}
 }
 

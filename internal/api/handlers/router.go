@@ -5,7 +5,7 @@ import (
 	"github.com/sblizard/vector-db/internal/api"
 )
 
-func NewRouter(healthHandler *api.Handler, upsertHandler *UpsertHandler, readHandler *ReadHandler) *mux.Router {
+func NewRouter(healthHandler *api.Handler, upsertHandler *UpsertHandler, readHandler *ReadHandler, deleteHandler *DeleteHandler) *mux.Router {
 	r := mux.NewRouter()
 
 	// Health check routes
@@ -16,6 +16,7 @@ func NewRouter(healthHandler *api.Handler, upsertHandler *UpsertHandler, readHan
 	// Vector operation routes
 	r.HandleFunc("/upsert", upsertHandler.Upsert).Methods("POST")
 	r.HandleFunc("/vectors", readHandler.GetAllVectors).Methods("GET")
+	r.HandleFunc("/vector/{id}", deleteHandler.DeleteVectorByIDHandler).Methods("DELETE")
 
 	return r
 }

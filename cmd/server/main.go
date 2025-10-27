@@ -16,11 +16,12 @@ func main() {
 		log.Fatalf("Failed to load config: %v", err)
 	}
 
-	handler := api.NewHandler(cfg.Storage, cfg.Layout)
-	upsertHandler := handlers.NewUpsertHandler(cfg.Storage, cfg.Layout)
-	readHandler := handlers.NewReadHandler(cfg.Storage, cfg.Layout)
+	handler := api.NewHandler(cfg.Engine)
+	upsertHandler := handlers.NewUpsertHandler(cfg.Engine)
+	readHandler := handlers.NewReadHandler(cfg.Engine)
+	deleteHandler := handlers.NewDeleteHandler(cfg.Engine)
 
-	router := handlers.NewRouter(handler, upsertHandler, readHandler)
+	router := handlers.NewRouter(handler, upsertHandler, readHandler, deleteHandler)
 
 	addr := fmt.Sprintf(":%d", cfg.Server.Port)
 	fmt.Printf("Server running on %s\n", addr)

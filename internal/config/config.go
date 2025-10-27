@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/sblizard/vector-db/internal/engine"
 	"github.com/sblizard/vector-db/internal/storage"
 )
 
@@ -22,6 +23,7 @@ type Config struct {
 	Server       ServerConfig       `json:"server"`
 	Storage      *storage.MetaStore `json:"-"`
 	Layout       *storage.Layout    `json:"-"`
+	Engine       *engine.Engine     `json:"-"`
 }
 
 func DefaultConfig() Config {
@@ -35,6 +37,7 @@ func DefaultConfig() Config {
 		Server:       ServerConfig{Port: 8080},
 		Storage:      storage.NewMetaStore("./data/metadata.db"),
 		Layout:       storage.NewLayout("./data"),
+		Engine:       engine.NewEngine(storage.NewMetaStore("./data/metadata.db"), storage.NewLayout("./data")),
 	}
 }
 

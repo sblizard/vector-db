@@ -38,3 +38,9 @@ type StoredVector struct {
 	OriginalVector []float32              `json:"original_vector,omitempty"`
 	Metadata       map[string]interface{} `json:"metadata,omitempty"`
 }
+
+type DeleteResponse struct {
+	Status     string `json:"status"`
+	Message    string `json:"message"`
+	StatusCode int    `json:"status_code,omitempty"`
+}
