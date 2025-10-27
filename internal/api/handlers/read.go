@@ -92,6 +92,8 @@ func extractOriginalVector(metadata map[string]interface{}) []float32 {
 	for i, v := range vecArray {
 		if floatVal, ok := v.(float64); ok {
 			originalVector[i] = float32(floatVal)
+		} else {
+			return nil
 		}
 	}
 
