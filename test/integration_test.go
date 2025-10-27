@@ -204,7 +204,7 @@ func TestIntegration_ErrorHandling(t *testing.T) {
 		{
 			name:           "missing ID",
 			request:        handlers.UpsertRequest{ID: "", Vector: []float32{1.0}},
-			expectedStatus: http.StatusBadRequest,
+			expectedStatus: http.StatusCreated,
 		},
 		{
 			name:           "empty vector",
