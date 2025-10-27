@@ -80,3 +80,19 @@ func (m *MetaStore) GetAll() (map[string][]byte, error) {
 	})
 	return result, err
 }
+
+// DeleteAllMetadata removes all metadata entries from the MetaStore.
+func (m *MetaStore) DeleteAllMetadata() error {
+	return m.DB.Update(func(txn *badger.Txn) error {
+		it := txn.NewIterator(badger.DefaultIteratorOptions)
+		defer it.Close()
+
+		for it.Rewind(); it.Valid(); it.Next() {
+			item := it.Item()
+			if err := txn.Delete(item.Key()); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}

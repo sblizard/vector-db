@@ -155,3 +155,23 @@ func (e *Engine) Upsert(id string, vector []float32, metadata map[string]interfa
 	fmt.Printf("Successfully upserted vector: ID=%s, Dim=%d, IsUpdate=%v\n", id, len(vector), isUpdate)
 	return isUpdate, nil
 }
+
+func (e *Engine) DeleteAllVectors() error {
+	vecPath := e.layout.VectorFile(0)
+	err := storage.DeleteAllVectors(vecPath)
+	if err != nil {
+		return fmt.Errorf("failed to delete all vectors: %v", err)
+	}
+
+	err = e.storage.DeleteAllIndices()
+	if err != nil {
+		return fmt.Errorf("failed to delete all indices: %v", err)
+	}
+
+	err = e.storage.DeleteAllMetadata()
+	if err != nil {
+		return fmt.Errorf("failed to delete all metadata: %v", err)
+	}
+
+	return nil
+}

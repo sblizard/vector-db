@@ -49,3 +49,21 @@ func (h *DeleteHandler) DeleteVectorByIDHandler(w http.ResponseWriter, r *http.R
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(response)
 }
+
+func (h *DeleteHandler) DeleteAllVectorsHandler(w http.ResponseWriter, r *http.Request) {
+	err := h.engine.DeleteAllVectors()
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to delete all vectors: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	response := DeleteResponse{
+		Status:     "success",
+		Message:    "All vectors deleted successfully",
+		StatusCode: http.StatusOK,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(response)
+}

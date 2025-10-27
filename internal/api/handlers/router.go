@@ -17,6 +17,7 @@ func NewRouter(healthHandler *api.Handler, upsertHandler *UpsertHandler, readHan
 	r.HandleFunc("/upsert", upsertHandler.Upsert).Methods("POST")
 	r.HandleFunc("/vectors", readHandler.GetAllVectors).Methods("GET")
 	r.HandleFunc("/vector/{id}", deleteHandler.DeleteVectorByIDHandler).Methods("DELETE")
+	r.HandleFunc("/vectors", deleteHandler.DeleteAllVectorsHandler).Methods("DELETE")
 
 	return r
 }
