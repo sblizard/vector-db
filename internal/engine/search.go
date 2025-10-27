@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"fmt"
 	"sort"
 
 	"github.com/sblizard/vector-db/internal/math"
@@ -17,7 +16,6 @@ func (e *Engine) KClosestVectorsBrute(query []float32, k int) ([]SearchResult, e
 	for _, storedVector := range allVectors.Vectors {
 		score, err := math.SafeCosineSimilarity(query, storedVector.Vector)
 		if err != nil {
-			fmt.Println("Error computing cosine similarity", err)
 			continue
 		}
 		result := SearchResult{

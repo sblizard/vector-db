@@ -31,6 +31,7 @@ func (h *SearchHandler) KClosestVectorsBruteHandler(w http.ResponseWriter, r *ht
 
 	closestVectors, err := h.engine.KClosestVectorsBrute(query, k)
 	if err != nil {
+		http.Error(w, fmt.Sprintf("Search failed: %v", err), http.StatusInternalServerError)
 		return
 	}
 
