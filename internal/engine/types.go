@@ -1,11 +1,5 @@
 package engine
 
-type DeletedVector struct {
-	ID       string                 `json:"id"`
-	Metadata map[string]interface{} `json:"metadata,omitempty"`
-	Vector   []float32              `json:"vector,omitempty"`
-}
-
 type GetAllResponse struct {
 	Vectors []StoredVector `json:"vectors"`
 }
