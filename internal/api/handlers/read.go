@@ -38,25 +38,39 @@ func (h *ReadHandler) GetAllVectors(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	vecPath := h.layout.VectorFile(0)
 	vectors := make([]StoredVector, 0, len(indices))
 
 	for id, index := range indices {
-		vector, err := storage.ReadVectorAt(vecPath, index.Dim, index.Position)
+		normalizedVector, err := storage.ReadVectorAt(h.layout.VectorFile(0), index.Dim, index.Position)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Failed to read vector %s: %v", id, err), http.StatusInternalServerError)
 			return
 		}
 
-		var metadata map[string]string
+		var metadata map[string]interface{}
+		var originalVector []float32
+
 		if metaBytes, ok := metaEntries[id]; ok {
 			_ = json.Unmarshal(metaBytes, &metadata)
+			originalVector = extractOriginalVector(metadata)
 		}
 
+		var userMetadata map[string]interface{}
+		if metadata == nil {
+			metadata = make(map[string]interface{})
+		} else {
+			userMetadata = make(map[string]interface{})
+			for k, v := range metadata {
+				if k != "original_vector" {
+					userMetadata[k] = v
+				}
+			}
+
 		vectors = append(vectors, StoredVector{
-			ID:       id,
-			Vector:   vector,
-			Metadata: metadata,
+			ID:             id,
+			Vector:         normalizedVector,
+			OriginalVector: originalVector,
+			Metadata:       userMetadata,
 		})
 	}
 
@@ -65,4 +79,27 @@ func (h *ReadHandler) GetAllVectors(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(resp)
 
 	fmt.Printf("Returned %d vectors with metadata\n", len(vectors))
+}
+
+func extractOriginalVector(metadata map[string]interface{}) []float32 {
+	origVec, exists := metadata["original_vector"]
+	if !exists {
+		return nil
+	}
+
+	vecArray, ok := origVec.([]interface{})
+	if !ok {
+		return nil
+	}
+
+	originalVector := make([]float32, len(vecArray))
+	for i, v := range vecArray {
+		if floatVal, ok := v.(float64); ok {
+			originalVector[i] = float32(floatVal)
+		} else {
+			return nil
+		}
+	}
+
+	return originalVector
 }

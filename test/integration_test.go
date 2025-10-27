@@ -56,7 +56,7 @@ func TestIntegration_UpsertAndRetrieve(t *testing.T) {
 	upsertReq := handlers.UpsertRequest{
 		ID:       "test_vec",
 		Vector:   []float32{1.0, 2.0, 3.0, 4.0},
-		Metadata: map[string]string{"category": "test", "label": "sample"},
+		Metadata: map[string]interface{}{"category": "test", "label": "sample"},
 	}
 
 	body, _ := json.Marshal(upsertReq)
@@ -108,9 +108,9 @@ func TestIntegration_MultipleVectors(t *testing.T) {
 
 	// Insert multiple vectors
 	vectors := []handlers.UpsertRequest{
-		{ID: "vec1", Vector: []float32{1.0, 2.0, 3.0}, Metadata: map[string]string{"label": "a"}},
-		{ID: "vec2", Vector: []float32{4.0, 5.0, 6.0}, Metadata: map[string]string{"label": "b"}},
-		{ID: "vec3", Vector: []float32{7.0, 8.0, 9.0}, Metadata: map[string]string{"label": "c"}},
+		{ID: "vec1", Vector: []float32{1.0, 2.0, 3.0}, Metadata: map[string]interface{}{"label": "a"}},
+		{ID: "vec2", Vector: []float32{4.0, 5.0, 6.0}, Metadata: map[string]interface{}{"label": "b"}},
+		{ID: "vec3", Vector: []float32{7.0, 8.0, 9.0}, Metadata: map[string]interface{}{"label": "c"}},
 	}
 
 	for _, vec := range vectors {
@@ -145,7 +145,7 @@ func TestIntegration_UpdateVector(t *testing.T) {
 	upsertReq := handlers.UpsertRequest{
 		ID:       "update_test",
 		Vector:   []float32{1.0, 2.0, 3.0},
-		Metadata: map[string]string{"version": "1"},
+		Metadata: map[string]interface{}{"version": "1"},
 	}
 	body, _ := json.Marshal(upsertReq)
 	resp, _ := http.Post(server.URL+"/upsert", "application/json", bytes.NewBuffer(body))
@@ -155,7 +155,7 @@ func TestIntegration_UpdateVector(t *testing.T) {
 	updateReq := handlers.UpsertRequest{
 		ID:       "update_test",
 		Vector:   []float32{10.0, 20.0, 30.0},
-		Metadata: map[string]string{"version": "2"},
+		Metadata: map[string]interface{}{"version": "2"},
 	}
 	body, _ = json.Marshal(updateReq)
 	resp, err := http.Post(server.URL+"/upsert", "application/json", bytes.NewBuffer(body))
@@ -183,8 +183,18 @@ func TestIntegration_UpdateVector(t *testing.T) {
 	}
 
 	vec := getAllResp.Vectors[0]
-	if vec.Vector[0] != 10.0 {
-		t.Errorf("Expected updated vector[0] = 10.0, got %f", vec.Vector[0])
+	if vec.OriginalVector[0] != 10.0 {
+		t.Errorf("Expected updated original_vector[0] = 10.0, got %f", vec.OriginalVector[0])
+	}
+
+	// Verify normalized vector is actually normalized (unit length)
+	normSum := float32(0)
+	for _, v := range vec.Vector {
+		normSum += v * v
+	}
+	normLength := float32(0.999) // Allow small floating point error
+	if normSum < normLength || normSum > 1.001 {
+		t.Errorf("Expected normalized vector to have unit length, got %f", normSum)
 	}
 
 	if vec.Metadata["version"] != "2" {
@@ -204,7 +214,7 @@ func TestIntegration_ErrorHandling(t *testing.T) {
 		{
 			name:           "missing ID",
 			request:        handlers.UpsertRequest{ID: "", Vector: []float32{1.0}},
-			expectedStatus: http.StatusBadRequest,
+			expectedStatus: http.StatusCreated,
 		},
 		{
 			name:           "empty vector",
@@ -226,6 +236,67 @@ func TestIntegration_ErrorHandling(t *testing.T) {
 				t.Errorf("Expected status %d, got %d", tt.expectedStatus, resp.StatusCode)
 			}
 		})
+	}
+}
+
+func TestIntegration_VectorNormalization(t *testing.T) {
+	server, cleanup := setupTestServer(t)
+	defer cleanup()
+
+	// Insert a vector that's not normalized
+	upsertReq := handlers.UpsertRequest{
+		ID:       "norm_test",
+		Vector:   []float32{3.0, 4.0}, // Length = 5.0
+		Metadata: map[string]interface{}{"test": "normalization"},
+	}
+	body, _ := json.Marshal(upsertReq)
+	resp, err := http.Post(server.URL+"/upsert", "application/json", bytes.NewBuffer(body))
+	if err != nil {
+		t.Fatalf("Upsert request failed: %v", err)
+	}
+	_ = resp.Body.Close()
+
+	// Retrieve and verify
+	resp, err = http.Get(server.URL + "/vectors")
+	if err != nil {
+		t.Fatalf("Request failed: %v", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	var getAllResp handlers.GetAllResponse
+	_ = json.NewDecoder(resp.Body).Decode(&getAllResp)
+
+	if len(getAllResp.Vectors) != 1 {
+		t.Fatalf("Expected 1 vector, got %d", len(getAllResp.Vectors))
+	}
+
+	vec := getAllResp.Vectors[0]
+
+	// Verify original vector is preserved
+	if vec.OriginalVector[0] != 3.0 || vec.OriginalVector[1] != 4.0 {
+		t.Errorf("Original vector not preserved: expected [3.0, 4.0], got [%f, %f]",
+			vec.OriginalVector[0], vec.OriginalVector[1])
+	}
+
+	// Verify normalized vector has unit length (sqrt(x^2 + y^2) = 1)
+	var sumSquares float32
+	for _, v := range vec.Vector {
+		sumSquares += v * v
+	}
+
+	// Allow small floating point error
+	if sumSquares < 0.999 || sumSquares > 1.001 {
+		t.Errorf("Expected normalized vector to have unit length, got length^2 = %f", sumSquares)
+	}
+
+	// Verify normalized values are correct: [3/5, 4/5] = [0.6, 0.8]
+	expectedNorm := []float32{0.6, 0.8}
+	tolerance := float32(0.0001)
+	for i, expected := range expectedNorm {
+		diff := vec.Vector[i] - expected
+		if diff < -tolerance || diff > tolerance {
+			t.Errorf("Normalized vector[%d]: expected %f, got %f", i, expected, vec.Vector[i])
+		}
 	}
 }
 
@@ -263,7 +334,7 @@ func BenchmarkUpsert(b *testing.B) {
 		upsertReq := handlers.UpsertRequest{
 			ID:       fmt.Sprintf("vec_%d", i),
 			Vector:   []float32{float32(i), float32(i + 1), float32(i + 2)},
-			Metadata: map[string]string{"index": fmt.Sprintf("%d", i)},
+			Metadata: map[string]interface{}{"index": fmt.Sprintf("%d", i)},
 		}
 		body, _ := json.Marshal(upsertReq)
 		resp, _ := http.Post(server.URL+"/upsert", "application/json", bytes.NewBuffer(body))

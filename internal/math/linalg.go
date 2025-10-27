@@ -12,6 +12,9 @@ func L2Norm(v []float32) float32 {
 
 func Normalize(v []float32) []float32 {
 	norm := L2Norm(v)
+	if norm == 0 {
+		return make([]float32, len(v))
+	}
 	out := make([]float32, len(v))
 	for i, x := range v {
 		out[i] = x / norm

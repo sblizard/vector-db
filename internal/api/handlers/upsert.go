@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/google/uuid"
+	"github.com/sblizard/vector-db/internal/math"
 	"github.com/sblizard/vector-db/internal/storage"
 )
 
@@ -28,8 +30,7 @@ func (h *UpsertHandler) Upsert(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if req.ID == "" {
-		http.Error(w, "Vector ID is required", http.StatusBadRequest)
-		return
+		req.ID = uuid.New().String()
 	}
 
 	if len(req.Vector) == 0 {
@@ -44,13 +45,15 @@ func (h *UpsertHandler) Upsert(w http.ResponseWriter, r *http.Request) {
 	existingIndex, err := h.storage.GetIndex(req.ID)
 	isUpdate := err == nil
 
+	normalizedVector := math.Normalize(req.Vector)
+
 	if isUpdate {
 		if len(req.Vector) != existingIndex.Dim {
 			http.Error(w, fmt.Sprintf("Vector dimension mismatch: expected %d, got %d", existingIndex.Dim, len(req.Vector)), http.StatusBadRequest)
 			return
 		}
 
-		if err := storage.WriteVectorAt(vecPath, req.Vector, existingIndex.Position); err != nil {
+		if err := storage.WriteVectorAt(vecPath, normalizedVector, existingIndex.Position); err != nil {
 			http.Error(w, fmt.Sprintf("Failed to update vector: %v", err), http.StatusInternalServerError)
 			return
 		}
@@ -61,7 +64,7 @@ func (h *UpsertHandler) Upsert(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if err := storage.AppendVector(vecPath, req.Vector); err != nil {
+		if err := storage.AppendVector(vecPath, normalizedVector); err != nil {
 			http.Error(w, fmt.Sprintf("Failed to store vector: %v", err), http.StatusInternalServerError)
 			return
 		}
@@ -76,7 +79,15 @@ func (h *UpsertHandler) Upsert(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	metadataBytes, err := json.Marshal(req.Metadata)
+	metadataWithVector := make(map[string]interface{})
+	if req.Metadata != nil {
+		for k, v := range req.Metadata {
+			metadataWithVector[k] = v
+		}
+	}
+	metadataWithVector["original_vector"] = req.Vector
+
+	metadataBytes, err := json.Marshal(metadataWithVector)
 	if err != nil {
 		http.Error(w, "Failed to serialize metadata", http.StatusInternalServerError)
 		return
