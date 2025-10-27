@@ -56,9 +56,13 @@ func (h *ReadHandler) GetAllVectors(w http.ResponseWriter, r *http.Request) {
 		}
 
 		userMetadata := make(map[string]interface{})
-		for k, v := range metadata {
-			if k != "original_vector" {
-				userMetadata[k] = v
+		if metadata == nil {
+			metadata = make(map[string]interface{})
+		} else {
+			for k, v := range metadata {
+				if k != "original_vector" {
+					userMetadata[k] = v
+				}
 			}
 		}
 
