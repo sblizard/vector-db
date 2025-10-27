@@ -84,7 +84,9 @@ func (m *MetaStore) GetAll() (map[string][]byte, error) {
 // DeleteAllMetadata removes all metadata entries from the MetaStore.
 func (m *MetaStore) DeleteAllMetadata() error {
 	return m.DB.Update(func(txn *badger.Txn) error {
-		it := txn.NewIterator(badger.DefaultIteratorOptions)
+		opts := badger.DefaultIteratorOptions
+		opts.Prefix = []byte(indexPrefix)
+		it := txn.NewIterator(opts)
 		defer it.Close()
 
 		for it.Rewind(); it.Valid(); it.Next() {
