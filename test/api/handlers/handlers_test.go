@@ -384,7 +384,7 @@ func TestDeleteHandler_EmptyID(t *testing.T) {
 	w := httptest.NewRecorder()
 	deleteHandler.DeleteVectorByIDHandler(w, httpReq)
 
-	if w.Code != http.StatusInternalServerError {
-		t.Errorf("Expected status %d for empty ID, got %d", http.StatusInternalServerError, w.Code)
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("Expected status %d for empty ID, got %d", http.StatusBadRequest, w.Code)
 	}
 }
