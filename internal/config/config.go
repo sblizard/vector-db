@@ -27,6 +27,8 @@ type Config struct {
 }
 
 func DefaultConfig() Config {
+	storageConfig := storage.NewMetaStore("./data/metadata.db")
+	layoutConfig := storage.NewLayout("./data")
 	return Config{
 		Dim:          128,
 		NumSubspaces: 16,
@@ -35,9 +37,9 @@ func DefaultConfig() Config {
 		DataPath:     "./data",
 		DBPath:       "./data/metadata.db",
 		Server:       ServerConfig{Port: 8080},
-		Storage:      storage.NewMetaStore("./data/metadata.db"),
-		Layout:       storage.NewLayout("./data"),
-		Engine:       engine.NewEngine(storage.NewMetaStore("./data/metadata.db"), storage.NewLayout("./data")),
+		Storage:      storageConfig,
+		Layout:       layoutConfig,
+		Engine:       engine.NewEngine(storageConfig, layoutConfig),
 	}
 }
 
