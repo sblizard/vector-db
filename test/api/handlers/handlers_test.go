@@ -3,6 +3,7 @@ package handlers_test
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -386,5 +387,251 @@ func TestDeleteHandler_EmptyID(t *testing.T) {
 
 	if w.Code != http.StatusBadRequest {
 		t.Errorf("Expected status %d for empty ID, got %d", http.StatusBadRequest, w.Code)
+	}
+}
+
+// Delete All Vectors Tests
+
+func TestDeleteHandler_DeleteAllVectors_WithData(t *testing.T) {
+	upsertHandler, readHandler, deleteHandler, cleanup := setupTestHandlers(t)
+	defer cleanup()
+
+	// Insert multiple vectors
+	vectors := []handlers.UpsertRequest{
+		{ID: "vec1", Vector: []float32{1.0, 2.0, 3.0}, Metadata: map[string]interface{}{"type": "A"}},
+		{ID: "vec2", Vector: []float32{4.0, 5.0, 6.0}, Metadata: map[string]interface{}{"type": "B"}},
+		{ID: "vec3", Vector: []float32{7.0, 8.0, 9.0}, Metadata: map[string]interface{}{"type": "C"}},
+	}
+
+	for _, req := range vectors {
+		body, _ := json.Marshal(req)
+		httpReq := httptest.NewRequest("POST", "/upsert", bytes.NewBuffer(body))
+		w := httptest.NewRecorder()
+		upsertHandler.Upsert(w, httpReq)
+	}
+
+	// Verify vectors were inserted
+	httpReq := httptest.NewRequest("GET", "/vectors", nil)
+	w := httptest.NewRecorder()
+	readHandler.GetAllVectors(w, httpReq)
+
+	var getAllResp handlers.GetAllResponse
+	_ = json.NewDecoder(w.Body).Decode(&getAllResp)
+
+	if len(getAllResp.Vectors) != 3 {
+		t.Errorf("Expected 3 vectors before deletion, got %d", len(getAllResp.Vectors))
+	}
+
+	// Delete all vectors
+	httpReq = httptest.NewRequest("DELETE", "/vectors", nil)
+	w = httptest.NewRecorder()
+	deleteHandler.DeleteAllVectorsHandler(w, httpReq)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("Expected status %d, got %d", http.StatusOK, w.Code)
+	}
+
+	var resp handlers.DeleteResponse
+	_ = json.NewDecoder(w.Body).Decode(&resp)
+
+	if resp.Status != "success" {
+		t.Errorf("Expected status 'success', got '%s'", resp.Status)
+	}
+
+	if resp.Message != "All vectors deleted successfully" {
+		t.Errorf("Expected 'All vectors deleted successfully', got '%s'", resp.Message)
+	}
+
+	// Verify all vectors are deleted
+	httpReq = httptest.NewRequest("GET", "/vectors", nil)
+	w = httptest.NewRecorder()
+	readHandler.GetAllVectors(w, httpReq)
+
+	_ = json.NewDecoder(w.Body).Decode(&getAllResp)
+
+	if len(getAllResp.Vectors) != 0 {
+		t.Errorf("Expected 0 vectors after delete all, got %d", len(getAllResp.Vectors))
+	}
+}
+
+func TestDeleteHandler_DeleteAllVectors_Empty(t *testing.T) {
+	_, _, deleteHandler, cleanup := setupTestHandlers(t)
+	defer cleanup()
+
+	// Delete all vectors when there are none
+	httpReq := httptest.NewRequest("DELETE", "/vectors", nil)
+	w := httptest.NewRecorder()
+	deleteHandler.DeleteAllVectorsHandler(w, httpReq)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("Expected status %d for deleting empty store, got %d. Error: %s", http.StatusOK, w.Code, w.Body.String())
+	}
+
+	var resp handlers.DeleteResponse
+	_ = json.NewDecoder(w.Body).Decode(&resp)
+
+	if resp.Status != "success" {
+		t.Errorf("Expected status 'success', got '%s'", resp.Status)
+	}
+}
+
+func TestDeleteHandler_DeleteAllAndReInsert(t *testing.T) {
+	upsertHandler, readHandler, deleteHandler, cleanup := setupTestHandlers(t)
+	defer cleanup()
+
+	// Insert vectors
+	vectors := []handlers.UpsertRequest{
+		{ID: "vec1", Vector: []float32{1.0, 2.0}, Metadata: map[string]interface{}{"batch": "1"}},
+		{ID: "vec2", Vector: []float32{3.0, 4.0}, Metadata: map[string]interface{}{"batch": "1"}},
+	}
+
+	for _, req := range vectors {
+		body, _ := json.Marshal(req)
+		httpReq := httptest.NewRequest("POST", "/upsert", bytes.NewBuffer(body))
+		w := httptest.NewRecorder()
+		upsertHandler.Upsert(w, httpReq)
+	}
+
+	// Delete all
+	httpReq := httptest.NewRequest("DELETE", "/vectors", nil)
+	w := httptest.NewRecorder()
+	deleteHandler.DeleteAllVectorsHandler(w, httpReq)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("Expected status %d, got %d", http.StatusOK, w.Code)
+	}
+
+	// Re-insert new vectors
+	newVectors := []handlers.UpsertRequest{
+		{ID: "vec3", Vector: []float32{5.0, 6.0}, Metadata: map[string]interface{}{"batch": "2"}},
+		{ID: "vec4", Vector: []float32{7.0, 8.0}, Metadata: map[string]interface{}{"batch": "2"}},
+	}
+
+	for _, req := range newVectors {
+		body, _ := json.Marshal(req)
+		httpReq := httptest.NewRequest("POST", "/upsert", bytes.NewBuffer(body))
+		w := httptest.NewRecorder()
+		upsertHandler.Upsert(w, httpReq)
+
+		if w.Code != http.StatusCreated {
+			t.Errorf("Expected status %d for insert after delete all, got %d", http.StatusCreated, w.Code)
+		}
+	}
+
+	// Verify only new vectors exist
+	httpReq = httptest.NewRequest("GET", "/vectors", nil)
+	w = httptest.NewRecorder()
+	readHandler.GetAllVectors(w, httpReq)
+
+	var getAllResp handlers.GetAllResponse
+	_ = json.NewDecoder(w.Body).Decode(&getAllResp)
+
+	if len(getAllResp.Vectors) != 2 {
+		t.Errorf("Expected 2 vectors after re-insert, got %d", len(getAllResp.Vectors))
+	}
+
+	// Verify old vectors are gone and new ones exist
+	foundVec3, foundVec4 := false, false
+	for _, vec := range getAllResp.Vectors {
+		if vec.ID == "vec1" || vec.ID == "vec2" {
+			t.Errorf("Old vector %s should not exist after delete all", vec.ID)
+		}
+		if vec.ID == "vec3" {
+			foundVec3 = true
+		}
+		if vec.ID == "vec4" {
+			foundVec4 = true
+		}
+	}
+
+	if !foundVec3 || !foundVec4 {
+		t.Errorf("Expected to find vec3 and vec4 after re-insert")
+	}
+}
+
+func TestDeleteHandler_DeleteAllVectors_LargeDataset(t *testing.T) {
+	upsertHandler, readHandler, deleteHandler, cleanup := setupTestHandlers(t)
+	defer cleanup()
+
+	// Insert many vectors
+	numVectors := 100
+	for i := 0; i < numVectors; i++ {
+		req := handlers.UpsertRequest{
+			ID:       fmt.Sprintf("vec%d", i),
+			Vector:   []float32{float32(i), float32(i + 1), float32(i + 2)},
+			Metadata: map[string]interface{}{"index": i},
+		}
+		body, _ := json.Marshal(req)
+		httpReq := httptest.NewRequest("POST", "/upsert", bytes.NewBuffer(body))
+		w := httptest.NewRecorder()
+		upsertHandler.Upsert(w, httpReq)
+	}
+
+	// Verify all vectors were inserted
+	httpReq := httptest.NewRequest("GET", "/vectors", nil)
+	w := httptest.NewRecorder()
+	readHandler.GetAllVectors(w, httpReq)
+
+	var getAllResp handlers.GetAllResponse
+	_ = json.NewDecoder(w.Body).Decode(&getAllResp)
+
+	if len(getAllResp.Vectors) != numVectors {
+		t.Errorf("Expected %d vectors before deletion, got %d", numVectors, len(getAllResp.Vectors))
+	}
+
+	// Delete all vectors
+	httpReq = httptest.NewRequest("DELETE", "/vectors", nil)
+	w = httptest.NewRecorder()
+	deleteHandler.DeleteAllVectorsHandler(w, httpReq)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("Expected status %d, got %d", http.StatusOK, w.Code)
+	}
+
+	// Verify all are deleted
+	httpReq = httptest.NewRequest("GET", "/vectors", nil)
+	w = httptest.NewRecorder()
+	readHandler.GetAllVectors(w, httpReq)
+
+	_ = json.NewDecoder(w.Body).Decode(&getAllResp)
+
+	if len(getAllResp.Vectors) != 0 {
+		t.Errorf("Expected 0 vectors after delete all, got %d", len(getAllResp.Vectors))
+	}
+}
+
+func TestDeleteHandler_DeleteAllVectors_ThenDeleteByID(t *testing.T) {
+	upsertHandler, _, deleteHandler, cleanup := setupTestHandlers(t)
+	defer cleanup()
+
+	// Insert vectors
+	req := handlers.UpsertRequest{
+		ID:       "vec1",
+		Vector:   []float32{1.0, 2.0, 3.0},
+		Metadata: map[string]interface{}{"type": "test"},
+	}
+	body, _ := json.Marshal(req)
+	httpReq := httptest.NewRequest("POST", "/upsert", bytes.NewBuffer(body))
+	w := httptest.NewRecorder()
+	upsertHandler.Upsert(w, httpReq)
+
+	// Delete all vectors
+	httpReq = httptest.NewRequest("DELETE", "/vectors", nil)
+	w = httptest.NewRecorder()
+	deleteHandler.DeleteAllVectorsHandler(w, httpReq)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("Expected status %d, got %d", http.StatusOK, w.Code)
+	}
+
+	// Try to delete a specific vector that was already deleted
+	httpReq = httptest.NewRequest("DELETE", "/vector/vec1", nil)
+	httpReq = mux.SetURLVars(httpReq, map[string]string{"id": "vec1"})
+	w = httptest.NewRecorder()
+	deleteHandler.DeleteVectorByIDHandler(w, httpReq)
+
+	// Should return 404 since vector no longer exists
+	if w.Code != http.StatusNotFound {
+		t.Errorf("Expected status %d for already deleted vector, got %d", http.StatusNotFound, w.Code)
 	}
 }

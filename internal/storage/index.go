@@ -106,3 +106,21 @@ func (m *MetaStore) GetNextPosition(dim int) (int64, error) {
 	bytesPerFloat := int64(4)
 	return maxPos + int64(maxDim)*bytesPerFloat, nil
 }
+
+// DeleteAllIndices removes all vector indices from the MetaStore.
+func (m *MetaStore) DeleteAllIndices() error {
+	return m.DB.Update(func(txn *badger.Txn) error {
+		opts := badger.DefaultIteratorOptions
+		opts.Prefix = []byte(indexPrefix)
+		it := txn.NewIterator(opts)
+		defer it.Close()
+
+		for it.Rewind(); it.Valid(); it.Next() {
+			item := it.Item()
+			if err := txn.Delete(item.Key()); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
