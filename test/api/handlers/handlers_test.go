@@ -121,8 +121,15 @@ func TestUpsertHandler_MissingID(t *testing.T) {
 
 	upsertHandler.Upsert(w, httpReq)
 
-	if w.Code != http.StatusBadRequest {
-		t.Errorf("Expected status %d, got %d", http.StatusBadRequest, w.Code)
+	if w.Code != http.StatusCreated {
+		t.Errorf("Expected status %d, got %d", http.StatusCreated, w.Code)
+	}
+
+	var resp handlers.UpsertResponse
+	_ = json.NewDecoder(w.Body).Decode(&resp)
+
+	if resp.Status != "success" {
+		t.Errorf("Expected status 'success', got '%s'", resp.Status)
 	}
 }
 
