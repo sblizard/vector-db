@@ -16,6 +16,7 @@ func NewMetaStore(path string) *MetaStore {
 	return db
 }
 
+// OpenMetaStore opens a BadgerDB instance at the specified path.
 func OpenMetaStore(path string) (*MetaStore, error) {
 	opts := badger.DefaultOptions(path)
 	opts.Logger = nil
@@ -26,16 +27,19 @@ func OpenMetaStore(path string) (*MetaStore, error) {
 	return &MetaStore{DB: db}, nil
 }
 
+// Close closes the BadgerDB instance.
 func (m *MetaStore) Close() error {
 	return m.DB.Close()
 }
 
+// Put stores a key-value pair in the MetaStore.
 func (m *MetaStore) Put(key string, value []byte) error {
 	return m.DB.Update(func(txn *badger.Txn) error {
 		return txn.Set([]byte(key), value)
 	})
 }
 
+// Get retrieves the value for a given key from the MetaStore.
 func (m *MetaStore) Get(key string) ([]byte, error) {
 	var valCopy []byte
 	err := m.DB.View(func(txn *badger.Txn) error {
@@ -49,12 +53,14 @@ func (m *MetaStore) Get(key string) ([]byte, error) {
 	return valCopy, err
 }
 
+// Delete removes a key-value pair from the MetaStore.
 func (m *MetaStore) Delete(key string) error {
 	return m.DB.Update(func(txn *badger.Txn) error {
 		return txn.Delete([]byte(key))
 	})
 }
 
+// GetAll retrieves all key-value pairs from the MetaStore.
 func (m *MetaStore) GetAll() (map[string][]byte, error) {
 	result := make(map[string][]byte)
 	err := m.DB.View(func(txn *badger.Txn) error {

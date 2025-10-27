@@ -14,6 +14,7 @@ type VectorIndex struct {
 
 const indexPrefix = "_idx_"
 
+// PutIndex stores the vector index for the given ID.
 func (m *MetaStore) PutIndex(id string, index VectorIndex) error {
 	data, err := json.Marshal(index)
 	if err != nil {
@@ -25,6 +26,7 @@ func (m *MetaStore) PutIndex(id string, index VectorIndex) error {
 	})
 }
 
+// GetIndex retrieves the vector index for the given ID.
 func (m *MetaStore) GetIndex(id string) (*VectorIndex, error) {
 	var index VectorIndex
 	err := m.DB.View(func(txn *badger.Txn) error {
@@ -44,12 +46,14 @@ func (m *MetaStore) GetIndex(id string) (*VectorIndex, error) {
 	return &index, nil
 }
 
+// DeleteIndex removes the vector index for the given ID.
 func (m *MetaStore) DeleteIndex(id string) error {
 	return m.DB.Update(func(txn *badger.Txn) error {
 		return txn.Delete([]byte(indexPrefix + id))
 	})
 }
 
+// GetAllIndices retrieves all vector indices stored in the MetaStore.
 func (m *MetaStore) GetAllIndices() (map[string]VectorIndex, error) {
 	result := make(map[string]VectorIndex)
 	err := m.DB.View(func(txn *badger.Txn) error {
@@ -79,6 +83,7 @@ func (m *MetaStore) GetAllIndices() (map[string]VectorIndex, error) {
 	return result, err
 }
 
+// GetNextPosition calculates the next available position for storing a new vector of given dimension.
 func (m *MetaStore) GetNextPosition(dim int) (int64, error) {
 	indices, err := m.GetAllIndices()
 	if err != nil {

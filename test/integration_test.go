@@ -10,6 +10,7 @@ import (
 
 	"github.com/sblizard/vector-db/internal/api"
 	"github.com/sblizard/vector-db/internal/api/handlers"
+	"github.com/sblizard/vector-db/internal/engine"
 	"github.com/sblizard/vector-db/internal/storage"
 )
 
@@ -17,12 +18,14 @@ func setupTestServer(t *testing.T) (*httptest.Server, func()) {
 	tmpDir := t.TempDir()
 	store := storage.NewMetaStore(tmpDir)
 	layout := storage.NewLayout(tmpDir)
+	engine := engine.NewEngine(store, layout)
 
-	healthHandler := api.NewHandler(store, layout)
-	upsertHandler := handlers.NewUpsertHandler(store, layout)
-	readHandler := handlers.NewReadHandler(store, layout)
+	healthHandler := api.NewHandler(engine)
+	upsertHandler := handlers.NewUpsertHandler(engine)
+	readHandler := handlers.NewReadHandler(engine)
+	deleteHandler := handlers.NewDeleteHandler(engine)
 
-	router := handlers.NewRouter(healthHandler, upsertHandler, readHandler)
+	router := handlers.NewRouter(healthHandler, upsertHandler, readHandler, deleteHandler)
 	server := httptest.NewServer(router)
 
 	cleanup := func() {
@@ -322,8 +325,19 @@ func TestIntegration_EmptyDatabase(t *testing.T) {
 	}
 	defer func() { _ = resp.Body.Close() }()
 
-	if resp.StatusCode != http.StatusNotFound {
-		t.Errorf("Expected status %d for empty database, got %d", http.StatusNotFound, resp.StatusCode)
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("Expected status %d for empty database, got %d", http.StatusOK, resp.StatusCode)
+	}
+
+	// Verify empty array is returned
+	var result struct {
+		Vectors []interface{} `json:"vectors"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		t.Fatalf("Failed to decode response: %v", err)
+	}
+	if len(result.Vectors) != 0 {
+		t.Errorf("Expected empty vectors array, got %d vectors", len(result.Vectors))
 	}
 }
 
@@ -331,13 +345,15 @@ func BenchmarkUpsert(b *testing.B) {
 	tmpDir := b.TempDir()
 	store := storage.NewMetaStore(tmpDir)
 	layout := storage.NewLayout(tmpDir)
+	engine := engine.NewEngine(store, layout)
 	defer func() { _ = store.Close() }()
 
-	healthHandler := api.NewHandler(store, layout)
-	upsertHandler := handlers.NewUpsertHandler(store, layout)
-	readHandler := handlers.NewReadHandler(store, layout)
+	healthHandler := api.NewHandler(engine)
+	upsertHandler := handlers.NewUpsertHandler(engine)
+	readHandler := handlers.NewReadHandler(engine)
+	deleteHandler := handlers.NewDeleteHandler(engine)
 
-	router := handlers.NewRouter(healthHandler, upsertHandler, readHandler)
+	router := handlers.NewRouter(healthHandler, upsertHandler, readHandler, deleteHandler)
 	server := httptest.NewServer(router)
 	defer server.Close()
 

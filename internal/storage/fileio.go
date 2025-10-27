@@ -6,6 +6,7 @@ import (
 	"os"
 )
 
+// AppendVector appends a vector to the end of the specified file.
 func AppendVector(path string, vector []float32) error {
 	f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
@@ -21,6 +22,7 @@ func AppendVector(path string, vector []float32) error {
 	return nil
 }
 
+// WriteVectorAt writes a vector to the specified position in the file.
 func WriteVectorAt(path string, vector []float32, position int64) error {
 	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0644)
 	if err != nil {
@@ -40,6 +42,7 @@ func WriteVectorAt(path string, vector []float32, position int64) error {
 	return nil
 }
 
+// ReadVectorAt reads a vector of given dimension from the specified position in the file.
 func ReadVectorAt(path string, dim int, position int64) ([]float32, error) {
 	f, err := os.Open(path)
 	if err != nil {
@@ -59,6 +62,7 @@ func ReadVectorAt(path string, dim int, position int64) ([]float32, error) {
 	return vector, nil
 }
 
+// LoadVectors loads all vectors from the specified file given the dimension.
 func LoadVectors(path string, dim int) ([][]float32, error) {
 	f, err := os.Open(path)
 	if err != nil {

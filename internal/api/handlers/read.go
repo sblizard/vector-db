@@ -5,97 +5,26 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/sblizard/vector-db/internal/storage"
+	"github.com/sblizard/vector-db/internal/engine"
 )
 
 type ReadHandler struct {
-	storage *storage.MetaStore
-	layout  *storage.Layout
+	engine *engine.Engine
 }
 
-func NewReadHandler(store *storage.MetaStore, layout *storage.Layout) *ReadHandler {
+func NewReadHandler(engine *engine.Engine) *ReadHandler {
 	return &ReadHandler{
-		storage: store,
-		layout:  layout,
+		engine: engine,
 	}
 }
 
 func (h *ReadHandler) GetAllVectors(w http.ResponseWriter, r *http.Request) {
-	metaEntries, err := h.storage.GetAll()
+	getAllResp, err := h.engine.GetAllVectors()
 	if err != nil {
-		http.Error(w, "Failed to retrieve vectors", http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("Failed to get all vectors: %v", err), http.StatusInternalServerError)
 		return
 	}
-
-	indices, err := h.storage.GetAllIndices()
-	if err != nil {
-		http.Error(w, "Failed to retrieve indices", http.StatusInternalServerError)
-		return
-	}
-
-	if len(indices) == 0 {
-		http.Error(w, "No vectors stored", http.StatusNotFound)
-		return
-	}
-
-	vectors := make([]StoredVector, 0, len(indices))
-
-	for id, index := range indices {
-		normalizedVector, err := storage.ReadVectorAt(h.layout.VectorFile(0), index.Dim, index.Position)
-		if err != nil {
-			http.Error(w, fmt.Sprintf("Failed to read vector %s: %v", id, err), http.StatusInternalServerError)
-			return
-		}
-
-		var metadata map[string]interface{}
-		var originalVector []float32
-
-		if metaBytes, ok := metaEntries[id]; ok {
-			_ = json.Unmarshal(metaBytes, &metadata)
-			originalVector = extractOriginalVector(metadata)
-		}
-
-		userMetadata := make(map[string]interface{})
-		for k, v := range metadata {
-			if k != "original_vector" {
-				userMetadata[k] = v
-			}
-		}
-
-		vectors = append(vectors, StoredVector{
-			ID:             id,
-			Vector:         normalizedVector,
-			OriginalVector: originalVector,
-			Metadata:       userMetadata,
-		})
-	}
-
-	resp := GetAllResponse{Vectors: vectors}
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(resp)
-
-	fmt.Printf("Returned %d vectors with metadata\n", len(vectors))
-}
-
-func extractOriginalVector(metadata map[string]interface{}) []float32 {
-	origVec, exists := metadata["original_vector"]
-	if !exists {
-		return nil
-	}
-
-	vecArray, ok := origVec.([]interface{})
-	if !ok {
-		return nil
-	}
-
-	originalVector := make([]float32, len(vecArray))
-	for i, v := range vecArray {
-		if floatVal, ok := v.(float64); ok {
-			originalVector[i] = float32(floatVal)
-		} else {
-			return nil
-		}
-	}
-
-	return originalVector
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(getAllResp)
 }
