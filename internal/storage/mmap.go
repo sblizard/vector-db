@@ -10,6 +10,7 @@ type MappedFile struct {
 	File *os.File
 }
 
+// Mmap memory-maps the file at the given path.
 func Mmap(path string) (*MappedFile, error) {
 	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0644)
 	if err != nil {
@@ -34,6 +35,7 @@ func Mmap(path string) (*MappedFile, error) {
 	}, nil
 }
 
+// Close unmaps the memory-mapped file and closes the underlying file.
 func (m *MappedFile) Close() error {
 	if err := syscall.Munmap(m.Data); err != nil {
 		_ = m.File.Close()
