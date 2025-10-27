@@ -1,9 +1,9 @@
 package handlers
 
 type UpsertRequest struct {
-	ID       string            `json:"id"`
-	Vector   []float32         `json:"vector"`
-	Metadata map[string]string `json:"metadata,omitempty"`
+	ID       string                 `json:"id"`
+	Vector   []float32              `json:"vector"`
+	Metadata map[string]interface{} `json:"metadata,omitempty"`
 }
 
 type UpsertResponse struct {
@@ -22,10 +22,10 @@ type QueryResponse struct {
 }
 
 type QueriedVector struct {
-	ID       string            `json:"id"`
-	Score    float32           `json:"score"`
-	Vector   []float32         `json:"vector"`
-	Metadata map[string]string `json:"metadata,omitempty"`
+	ID       string                 `json:"id"`
+	Score    float32                `json:"score"`
+	Vector   []float32              `json:"vector"`
+	Metadata map[string]interface{} `json:"metadata,omitempty"`
 }
 
 type GetAllResponse struct {
@@ -33,8 +33,8 @@ type GetAllResponse struct {
 }
 
 type StoredVector struct {
-	ID             string            `json:"id"`
-	Vector         []float32         `json:"vector"`
-	OriginalVector []float32         `json:"original_vector"`
-	Metadata       map[string]string `json:"metadata,omitempty"`
+	ID             string                 `json:"id"`
+	Vector         []float32              `json:"vector"`
+	OriginalVector []float32              `json:"original_vector"`
+	Metadata       map[string]interface{} `json:"metadata,omitempty"`
 }

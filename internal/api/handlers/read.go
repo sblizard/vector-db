@@ -52,15 +52,13 @@ func (h *ReadHandler) GetAllVectors(w http.ResponseWriter, r *http.Request) {
 
 		if metaBytes, ok := metaEntries[id]; ok {
 			_ = json.Unmarshal(metaBytes, &metadata)
-			originalVector = extractOriginalVector(metaBytes)
+			originalVector = extractOriginalVector(metadata)
 		}
 
-		stringMetadata := make(map[string]string)
+		userMetadata := make(map[string]interface{})
 		for k, v := range metadata {
 			if k != "original_vector" {
-				if strVal, ok := v.(string); ok {
-					stringMetadata[k] = strVal
-				}
+				userMetadata[k] = v
 			}
 		}
 
@@ -68,7 +66,7 @@ func (h *ReadHandler) GetAllVectors(w http.ResponseWriter, r *http.Request) {
 			ID:             id,
 			Vector:         normalizedVector,
 			OriginalVector: originalVector,
-			Metadata:       stringMetadata,
+			Metadata:       userMetadata,
 		})
 	}
 
@@ -79,12 +77,7 @@ func (h *ReadHandler) GetAllVectors(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("Returned %d vectors with metadata\n", len(vectors))
 }
 
-func extractOriginalVector(metaBytes []byte) []float32 {
-	var metadata map[string]interface{}
-	if err := json.Unmarshal(metaBytes, &metadata); err != nil {
-		return nil
-	}
-
+func extractOriginalVector(metadata map[string]interface{}) []float32 {
 	origVec, exists := metadata["original_vector"]
 	if !exists {
 		return nil
