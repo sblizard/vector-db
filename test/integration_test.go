@@ -183,8 +183,18 @@ func TestIntegration_UpdateVector(t *testing.T) {
 	}
 
 	vec := getAllResp.Vectors[0]
-	if vec.Vector[0] != 10.0 {
-		t.Errorf("Expected updated vector[0] = 10.0, got %f", vec.Vector[0])
+	if vec.OriginalVector[0] != 10.0 {
+		t.Errorf("Expected updated original_vector[0] = 10.0, got %f", vec.OriginalVector[0])
+	}
+
+	// Verify normalized vector is actually normalized (unit length)
+	normSum := float32(0)
+	for _, v := range vec.Vector {
+		normSum += v * v
+	}
+	normLength := float32(0.999) // Allow small floating point error
+	if normSum < normLength || normSum > 1.001 {
+		t.Errorf("Expected normalized vector to have unit length, got %f", normSum)
 	}
 
 	if vec.Metadata["version"] != "2" {
@@ -226,6 +236,67 @@ func TestIntegration_ErrorHandling(t *testing.T) {
 				t.Errorf("Expected status %d, got %d", tt.expectedStatus, resp.StatusCode)
 			}
 		})
+	}
+}
+
+func TestIntegration_VectorNormalization(t *testing.T) {
+	server, cleanup := setupTestServer(t)
+	defer cleanup()
+
+	// Insert a vector that's not normalized
+	upsertReq := handlers.UpsertRequest{
+		ID:       "norm_test",
+		Vector:   []float32{3.0, 4.0}, // Length = 5.0
+		Metadata: map[string]interface{}{"test": "normalization"},
+	}
+	body, _ := json.Marshal(upsertReq)
+	resp, err := http.Post(server.URL+"/upsert", "application/json", bytes.NewBuffer(body))
+	if err != nil {
+		t.Fatalf("Upsert request failed: %v", err)
+	}
+	_ = resp.Body.Close()
+
+	// Retrieve and verify
+	resp, err = http.Get(server.URL + "/vectors")
+	if err != nil {
+		t.Fatalf("Request failed: %v", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	var getAllResp handlers.GetAllResponse
+	_ = json.NewDecoder(resp.Body).Decode(&getAllResp)
+
+	if len(getAllResp.Vectors) != 1 {
+		t.Fatalf("Expected 1 vector, got %d", len(getAllResp.Vectors))
+	}
+
+	vec := getAllResp.Vectors[0]
+
+	// Verify original vector is preserved
+	if vec.OriginalVector[0] != 3.0 || vec.OriginalVector[1] != 4.0 {
+		t.Errorf("Original vector not preserved: expected [3.0, 4.0], got [%f, %f]",
+			vec.OriginalVector[0], vec.OriginalVector[1])
+	}
+
+	// Verify normalized vector has unit length (sqrt(x^2 + y^2) = 1)
+	var sumSquares float32
+	for _, v := range vec.Vector {
+		sumSquares += v * v
+	}
+
+	// Allow small floating point error
+	if sumSquares < 0.999 || sumSquares > 1.001 {
+		t.Errorf("Expected normalized vector to have unit length, got length^2 = %f", sumSquares)
+	}
+
+	// Verify normalized values are correct: [3/5, 4/5] = [0.6, 0.8]
+	expectedNorm := []float32{0.6, 0.8}
+	tolerance := float32(0.0001)
+	for i, expected := range expectedNorm {
+		diff := vec.Vector[i] - expected
+		if diff < -tolerance || diff > tolerance {
+			t.Errorf("Normalized vector[%d]: expected %f, got %f", i, expected, vec.Vector[i])
+		}
 	}
 }
 
