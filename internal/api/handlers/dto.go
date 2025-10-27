@@ -33,7 +33,8 @@ type GetAllResponse struct {
 }
 
 type StoredVector struct {
-	ID       string            `json:"id"`
-	Vector   []float32         `json:"vector"`
-	Metadata map[string]string `json:"metadata,omitempty"`
+	ID             string            `json:"id"`
+	Vector         []float32         `json:"vector"`
+	OriginalVector []float32         `json:"original_vector"`
+	Metadata       map[string]string `json:"metadata,omitempty"`
 }
