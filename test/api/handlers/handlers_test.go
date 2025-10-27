@@ -33,7 +33,7 @@ func TestUpsertHandler_Insert(t *testing.T) {
 	req := handlers.UpsertRequest{
 		ID:       "vec1",
 		Vector:   []float32{1.0, 2.0, 3.0},
-		Metadata: map[string]string{"type": "test"},
+		Metadata: map[string]interface{}{"type": "test"},
 	}
 
 	body, _ := json.Marshal(req)
@@ -62,7 +62,7 @@ func TestUpsertHandler_Update(t *testing.T) {
 	req1 := handlers.UpsertRequest{
 		ID:       "vec1",
 		Vector:   []float32{1.0, 2.0, 3.0},
-		Metadata: map[string]string{"type": "test"},
+		Metadata: map[string]interface{}{"type": "test"},
 	}
 	body1, _ := json.Marshal(req1)
 	httpReq1 := httptest.NewRequest("POST", "/upsert", bytes.NewBuffer(body1))
@@ -73,7 +73,7 @@ func TestUpsertHandler_Update(t *testing.T) {
 	req2 := handlers.UpsertRequest{
 		ID:       "vec1",
 		Vector:   []float32{10.0, 20.0, 30.0},
-		Metadata: map[string]string{"type": "updated"},
+		Metadata: map[string]interface{}{"type": "updated"},
 	}
 	body2, _ := json.Marshal(req2)
 	httpReq2 := httptest.NewRequest("POST", "/upsert", bytes.NewBuffer(body2))
@@ -166,8 +166,8 @@ func TestReadHandler_GetAllVectors_WithData(t *testing.T) {
 
 	// Insert test vectors
 	vectors := []handlers.UpsertRequest{
-		{ID: "vec1", Vector: []float32{1.0, 2.0}, Metadata: map[string]string{"label": "a"}},
-		{ID: "vec2", Vector: []float32{3.0, 4.0}, Metadata: map[string]string{"label": "b"}},
+		{ID: "vec1", Vector: []float32{1.0, 2.0}, Metadata: map[string]interface{}{"label": "a"}},
+		{ID: "vec2", Vector: []float32{3.0, 4.0}, Metadata: map[string]interface{}{"label": "b"}},
 	}
 
 	for _, req := range vectors {

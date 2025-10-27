@@ -56,7 +56,7 @@ func TestIntegration_UpsertAndRetrieve(t *testing.T) {
 	upsertReq := handlers.UpsertRequest{
 		ID:       "test_vec",
 		Vector:   []float32{1.0, 2.0, 3.0, 4.0},
-		Metadata: map[string]string{"category": "test", "label": "sample"},
+		Metadata: map[string]interface{}{"category": "test", "label": "sample"},
 	}
 
 	body, _ := json.Marshal(upsertReq)
@@ -108,9 +108,9 @@ func TestIntegration_MultipleVectors(t *testing.T) {
 
 	// Insert multiple vectors
 	vectors := []handlers.UpsertRequest{
-		{ID: "vec1", Vector: []float32{1.0, 2.0, 3.0}, Metadata: map[string]string{"label": "a"}},
-		{ID: "vec2", Vector: []float32{4.0, 5.0, 6.0}, Metadata: map[string]string{"label": "b"}},
-		{ID: "vec3", Vector: []float32{7.0, 8.0, 9.0}, Metadata: map[string]string{"label": "c"}},
+		{ID: "vec1", Vector: []float32{1.0, 2.0, 3.0}, Metadata: map[string]interface{}{"label": "a"}},
+		{ID: "vec2", Vector: []float32{4.0, 5.0, 6.0}, Metadata: map[string]interface{}{"label": "b"}},
+		{ID: "vec3", Vector: []float32{7.0, 8.0, 9.0}, Metadata: map[string]interface{}{"label": "c"}},
 	}
 
 	for _, vec := range vectors {
@@ -145,7 +145,7 @@ func TestIntegration_UpdateVector(t *testing.T) {
 	upsertReq := handlers.UpsertRequest{
 		ID:       "update_test",
 		Vector:   []float32{1.0, 2.0, 3.0},
-		Metadata: map[string]string{"version": "1"},
+		Metadata: map[string]interface{}{"version": "1"},
 	}
 	body, _ := json.Marshal(upsertReq)
 	resp, _ := http.Post(server.URL+"/upsert", "application/json", bytes.NewBuffer(body))
@@ -155,7 +155,7 @@ func TestIntegration_UpdateVector(t *testing.T) {
 	updateReq := handlers.UpsertRequest{
 		ID:       "update_test",
 		Vector:   []float32{10.0, 20.0, 30.0},
-		Metadata: map[string]string{"version": "2"},
+		Metadata: map[string]interface{}{"version": "2"},
 	}
 	body, _ = json.Marshal(updateReq)
 	resp, err := http.Post(server.URL+"/upsert", "application/json", bytes.NewBuffer(body))
@@ -263,7 +263,7 @@ func BenchmarkUpsert(b *testing.B) {
 		upsertReq := handlers.UpsertRequest{
 			ID:       fmt.Sprintf("vec_%d", i),
 			Vector:   []float32{float32(i), float32(i + 1), float32(i + 2)},
-			Metadata: map[string]string{"index": fmt.Sprintf("%d", i)},
+			Metadata: map[string]interface{}{"index": fmt.Sprintf("%d", i)},
 		}
 		body, _ := json.Marshal(upsertReq)
 		resp, _ := http.Post(server.URL+"/upsert", "application/json", bytes.NewBuffer(body))
