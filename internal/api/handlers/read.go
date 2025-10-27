@@ -55,16 +55,12 @@ func (h *ReadHandler) GetAllVectors(w http.ResponseWriter, r *http.Request) {
 			originalVector = extractOriginalVector(metadata)
 		}
 
-		var userMetadata map[string]interface{}
-		if metadata == nil {
-			metadata = make(map[string]interface{})
-		} else {
-			userMetadata = make(map[string]interface{})
-			for k, v := range metadata {
-				if k != "original_vector" {
-					userMetadata[k] = v
-				}
+		userMetadata := make(map[string]interface{})
+		for k, v := range metadata {
+			if k != "original_vector" {
+				userMetadata[k] = v
 			}
+		}
 
 		vectors = append(vectors, StoredVector{
 			ID:             id,

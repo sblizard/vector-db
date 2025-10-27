@@ -119,6 +119,9 @@ func TestIntegration_MultipleVectors(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Failed to insert vector %s: %v", vec.ID, err)
 		}
+		if resp.StatusCode != http.StatusCreated {
+			t.Errorf("Expected status %d for vector %s, got %d", http.StatusCreated, vec.ID, resp.StatusCode)
+		}
 		_ = resp.Body.Close()
 	}
 
@@ -129,11 +132,20 @@ func TestIntegration_MultipleVectors(t *testing.T) {
 	}
 	defer func() { _ = resp.Body.Close() }()
 
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("Expected status %d, got %d", http.StatusOK, resp.StatusCode)
+	}
+
 	var getAllResp handlers.GetAllResponse
-	_ = json.NewDecoder(resp.Body).Decode(&getAllResp)
+	if err := json.NewDecoder(resp.Body).Decode(&getAllResp); err != nil {
+		t.Fatalf("Failed to decode response: %v", err)
+	}
 
 	if len(getAllResp.Vectors) != 3 {
 		t.Errorf("Expected 3 vectors, got %d", len(getAllResp.Vectors))
+		for i, v := range getAllResp.Vectors {
+			t.Logf("Vector %d: ID=%s", i, v.ID)
+		}
 	}
 }
 
