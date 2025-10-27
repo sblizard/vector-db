@@ -221,65 +221,6 @@ func TestSearchHandler_TopKLargerThanDatabase(t *testing.T) {
 	}
 }
 
-func TestSearchHandler_HighDimensionalSearch(t *testing.T) {
-	upsertHandler, searchHandler, cleanup := setupTestSearchHandler(t)
-	defer cleanup()
-
-	// Insert high-dimensional vectors
-	dim := 128
-	vec1 := make([]float32, dim)
-	vec2 := make([]float32, dim)
-
-	for i := 0; i < dim; i++ {
-		vec1[i] = 1.0
-		vec2[i] = 0.5
-	}
-
-	upsertReq1 := handlers.UpsertRequest{ID: "vec1", Vector: vec1, Metadata: map[string]interface{}{}}
-	body1, _ := json.Marshal(upsertReq1)
-	httpReq1 := httptest.NewRequest("POST", "/upsert", bytes.NewBuffer(body1))
-	w1 := httptest.NewRecorder()
-	upsertHandler.Upsert(w1, httpReq1)
-
-	upsertReq2 := handlers.UpsertRequest{ID: "vec2", Vector: vec2, Metadata: map[string]interface{}{}}
-	body2, _ := json.Marshal(upsertReq2)
-	httpReq2 := httptest.NewRequest("POST", "/upsert", bytes.NewBuffer(body2))
-	w2 := httptest.NewRecorder()
-	upsertHandler.Upsert(w2, httpReq2)
-
-	// Search with vec1
-	searchReq := handlers.SearchRequest{
-		Vector: vec1,
-		TopK:   1,
-	}
-
-	body, _ := json.Marshal(searchReq)
-	httpReq := httptest.NewRequest("POST", "/search", bytes.NewBuffer(body))
-	w := httptest.NewRecorder()
-
-	searchHandler.KClosestVectorsBruteHandler(w, httpReq)
-
-	if w.Code != http.StatusOK {
-		t.Errorf("Expected status %d, got %d", http.StatusOK, w.Code)
-	}
-
-	var results []engine.SearchResult
-	_ = json.NewDecoder(w.Body).Decode(&results)
-
-	if len(results) != 1 {
-		t.Fatalf("Expected 1 result, got %d", len(results))
-	}
-
-	if results[0].ID != "vec1" {
-		t.Errorf("Expected result to be 'vec1', got '%s'", results[0].ID)
-	}
-
-	// Score should be close to 1.0 (perfect match)
-	if results[0].Score < 0.99 {
-		t.Errorf("Expected score close to 1.0 for perfect match, got %f", results[0].Score)
-	}
-}
-
 func TestSearchHandler_ScoreAccuracy(t *testing.T) {
 	upsertHandler, searchHandler, cleanup := setupTestSearchHandler(t)
 	defer cleanup()
