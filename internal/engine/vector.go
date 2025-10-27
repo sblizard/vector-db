@@ -9,28 +9,24 @@ import (
 )
 
 // DeleteVectorByID deletes a vector and its metadata by ID.
-func (e *Engine) DeleteVectorByID(id string) (DeletedVector, error) {
-	metadata, err := e.GetVectorMetadata(id)
-	fmt.Printf("Vector metadata: %v\n", metadata)
+// Returns true if the vector existed and was deleted, false if it didn't exist.
+func (e *Engine) DeleteVectorByID(id string) (bool, error) {
+	_, err := e.storage.GetIndex(id)
 	if err != nil {
-		return DeletedVector{}, err
+		return false, nil
 	}
 
 	err = e.storage.DeleteIndex(id)
 	if err != nil {
-		return DeletedVector{}, err
+		return false, err
 	}
 
 	err = e.storage.Delete(id)
 	if err != nil {
-		return DeletedVector{}, err
+		return false, err
 	}
 
-	return DeletedVector{
-		ID:       id,
-		Metadata: metadata,
-		Vector:   nil,
-	}, nil
+	return true, nil
 }
 
 func (e *Engine) GetVectorMetadata(id string) (map[string]interface{}, error) {

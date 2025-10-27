@@ -23,9 +23,14 @@ func NewDeleteHandler(engine *engine.Engine) *DeleteHandler {
 func (h *DeleteHandler) DeleteVectorByIDHandler(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 
-	_, err := h.engine.DeleteVectorByID(id)
+	deleted, err := h.engine.DeleteVectorByID(id)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to delete vector: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	if !deleted {
+		http.Error(w, fmt.Sprintf("Vector with ID %s not found", id), http.StatusNotFound)
 		return
 	}
 
