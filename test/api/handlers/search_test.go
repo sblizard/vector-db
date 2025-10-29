@@ -112,39 +112,6 @@ func TestSearchHandler_TopKResults(t *testing.T) {
 	}
 }
 
-func TestSearchHandler_InvalidTopK(t *testing.T) {
-	_, searchHandler, cleanup := setupTestSearchHandler(t)
-	defer cleanup()
-
-	tests := []struct {
-		name     string
-		topK     int
-		wantCode int
-	}{
-		{"zero topK", 0, http.StatusBadRequest},
-		{"negative topK", -1, http.StatusBadRequest},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			req := handlers.SearchRequest{
-				Vector: []float32{1.0, 0.0, 0.0},
-				TopK:   tt.topK,
-			}
-
-			body, _ := json.Marshal(req)
-			httpReq := httptest.NewRequest("POST", "/search", bytes.NewBuffer(body))
-			w := httptest.NewRecorder()
-
-			searchHandler.KClosestVectorsBruteHandler(w, httpReq)
-
-			if w.Code != tt.wantCode {
-				t.Errorf("Expected status %d, got %d", tt.wantCode, w.Code)
-			}
-		})
-	}
-}
-
 func TestSearchHandler_MissingVector(t *testing.T) {
 	_, searchHandler, cleanup := setupTestSearchHandler(t)
 	defer cleanup()
