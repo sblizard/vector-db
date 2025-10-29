@@ -24,7 +24,7 @@ func setupTestServer(t *testing.T) (*httptest.Server, func()) {
 	upsertHandler := handlers.NewUpsertHandler(engine)
 	readHandler := handlers.NewReadHandler(engine)
 	deleteHandler := handlers.NewDeleteHandler(engine)
-	searchHandler := handlers.NewSearchHandler(engine)
+	searchHandler := handlers.NewSearchHandler(engine, 10)
 
 	router := handlers.NewRouter(healthHandler, upsertHandler, readHandler, deleteHandler, searchHandler)
 	server := httptest.NewServer(router)
@@ -353,7 +353,7 @@ func BenchmarkUpsert(b *testing.B) {
 	upsertHandler := handlers.NewUpsertHandler(engine)
 	readHandler := handlers.NewReadHandler(engine)
 	deleteHandler := handlers.NewDeleteHandler(engine)
-	searchHandler := handlers.NewSearchHandler(engine)
+	searchHandler := handlers.NewSearchHandler(engine, 10)
 
 	router := handlers.NewRouter(healthHandler, upsertHandler, readHandler, deleteHandler, searchHandler)
 	server := httptest.NewServer(router)

@@ -20,7 +20,7 @@ func main() {
 	upsertHandler := handlers.NewUpsertHandler(cfg.Engine)
 	readHandler := handlers.NewReadHandler(cfg.Engine)
 	deleteHandler := handlers.NewDeleteHandler(cfg.Engine)
-	searchHandler := handlers.NewSearchHandler(cfg.Engine)
+	searchHandler := handlers.NewSearchHandler(cfg.Engine, cfg.TopK)
 
 	router := handlers.NewRouter(handler, upsertHandler, readHandler, deleteHandler, searchHandler)
 

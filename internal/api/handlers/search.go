@@ -11,16 +11,18 @@ import (
 
 type SearchHandler struct {
 	engine *engine.Engine
+	topK   int
 }
 
-func NewSearchHandler(engine *engine.Engine) *SearchHandler {
+func NewSearchHandler(engine *engine.Engine, topK int) *SearchHandler {
 	return &SearchHandler{
 		engine: engine,
+		topK:   topK,
 	}
 }
 
 func (h *SearchHandler) KClosestVectorsBruteHandler(w http.ResponseWriter, r *http.Request) {
-	req, err := extractSearchParams(r.Body)
+	req, err := h.extractSearchParams(r.Body)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Invalid request: %v", err), http.StatusBadRequest)
 		return
@@ -28,6 +30,7 @@ func (h *SearchHandler) KClosestVectorsBruteHandler(w http.ResponseWriter, r *ht
 
 	query := req.Vector
 	k := req.TopK
+	fmt.Printf("TopK:\n%d\n", k)
 
 	closestVectors, err := h.engine.KClosestVectorsBrute(query, k)
 	if err != nil {
@@ -41,13 +44,13 @@ func (h *SearchHandler) KClosestVectorsBruteHandler(w http.ResponseWriter, r *ht
 	}
 }
 
-func extractSearchParams(body io.ReadCloser) (SearchRequest, error) {
+func (h *SearchHandler) extractSearchParams(body io.ReadCloser) (SearchRequest, error) {
 	var req SearchRequest
 	if err := json.NewDecoder(body).Decode(&req); err != nil {
 		return req, err
 	}
 	if req.TopK <= 0 {
-		return req, fmt.Errorf("TopK must be a positive integer")
+		req.TopK = h.topK
 	}
 	if len(req.Vector) == 0 {
 		return req, fmt.Errorf("query vector is required")

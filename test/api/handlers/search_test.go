@@ -19,7 +19,7 @@ func setupTestSearchHandler(t *testing.T) (*handlers.UpsertHandler, *handlers.Se
 	eng := engine.NewEngine(store, layout)
 
 	upsertHandler := handlers.NewUpsertHandler(eng)
-	searchHandler := handlers.NewSearchHandler(eng)
+	searchHandler := handlers.NewSearchHandler(eng, 10)
 
 	cleanup := func() {
 		_ = store.Close()
