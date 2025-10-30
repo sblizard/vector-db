@@ -16,11 +16,16 @@ func main() {
 		log.Fatalf("Failed to load config: %v", err)
 	}
 
-	handler := api.NewHandler(cfg.Engine)
-	upsertHandler := handlers.NewUpsertHandler(cfg.Engine)
-	readHandler := handlers.NewReadHandler(cfg.Engine)
-	deleteHandler := handlers.NewDeleteHandler(cfg.Engine)
-	searchHandler := handlers.NewSearchHandler(cfg.Engine, cfg.TopK)
+	_, _, engine, err := cfg.Initialize()
+	if err != nil {
+		log.Fatalf("Failed to initialize engine: %v", err)
+	}
+
+	handler := api.NewHandler(engine)
+	upsertHandler := handlers.NewUpsertHandler(engine)
+	readHandler := handlers.NewReadHandler(engine)
+	deleteHandler := handlers.NewDeleteHandler(engine)
+	searchHandler := handlers.NewSearchHandler(engine)
 
 	router := handlers.NewRouter(handler, upsertHandler, readHandler, deleteHandler, searchHandler)
 

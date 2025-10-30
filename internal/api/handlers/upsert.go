@@ -11,36 +11,28 @@ import (
 
 type UpsertHandler struct {
 	engine *engine.Engine
+	dim    int
 }
 
 func NewUpsertHandler(engine *engine.Engine) *UpsertHandler {
 	return &UpsertHandler{
 		engine: engine,
+		dim:    engine.GetDim(),
 	}
 }
 
 func (h *UpsertHandler) Upsert(w http.ResponseWriter, r *http.Request) {
 	var req UpsertRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+
+	req, paramsErr := h.extractUpsertParams(w, r)
+	if paramsErr != nil {
 		return
 	}
 
-	if req.ID == "" {
-		req.ID = uuid.New().String()
-	}
+	isUpdate, upsertErr := h.engine.Upsert(req.ID, req.Vector, req.Metadata)
 
-	if len(req.Vector) == 0 {
-		http.Error(w, "Vector data is required", http.StatusBadRequest)
-		return
-	}
-
-	fmt.Printf("Received upsert: ID=%s, VectorDim=%d\n", req.ID, len(req.Vector))
-
-	isUpdate, err := h.engine.Upsert(req.ID, req.Vector, req.Metadata)
-
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to upsert vector: %v", err), http.StatusInternalServerError)
+	if upsertErr != nil {
+		http.Error(w, fmt.Sprintf("Failed to upsert vector: %v", upsertErr), http.StatusInternalServerError)
 		return
 	}
 
@@ -57,4 +49,31 @@ func (h *UpsertHandler) Upsert(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(resp)
 
 	fmt.Printf("Successfully upserted vector: ID=%s, Dim=%d, IsUpdate=%v\n", req.ID, len(req.Vector), isUpdate)
+}
+
+func (h *UpsertHandler) extractUpsertParams(w http.ResponseWriter, r *http.Request) (UpsertRequest, error) {
+	var req UpsertRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return UpsertRequest{}, err
+	}
+
+	if h.dim != len(req.Vector) {
+		http.Error(w, fmt.Sprintf("Vector dimension mismatch: expected %d, got %d", h.dim, len(req.Vector)), http.StatusBadRequest)
+		return UpsertRequest{}, fmt.Errorf("vector dimension mismatch: expected %d, got %d", h.dim, len(req.Vector))
+	}
+
+	if req.ID == "" {
+		req.ID = uuid.New().String()
+	}
+
+	if len(req.Vector) == 0 {
+		http.Error(w, "Vector data is required", http.StatusBadRequest)
+		return UpsertRequest{}, fmt.Errorf("vector data is required")
+	} else if len(req.Vector) != h.dim {
+		http.Error(w, fmt.Sprintf("Vector dimension mismatch: expected %d, got %d", h.dim, len(req.Vector)), http.StatusBadRequest)
+		return UpsertRequest{}, fmt.Errorf("vector dimension mismatch: expected %d, got %d", h.dim, len(req.Vector))
+	}
+
+	return req, nil
 }

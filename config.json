@@ -1,5 +1,5 @@
 {
-  "dim": 768,
+  "dim": 128,
   "num_subspaces": 64,
   "top_k": 10,
   "top_l": 4,
@@ -7,5 +7,9 @@
   "db_path": "./data/metadata.db",
   "server": {
     "port": 8080
+  },
+  "engine": {
+    "top_k": 10,
+    "dim": 768
   }
 }

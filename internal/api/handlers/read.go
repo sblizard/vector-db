@@ -10,11 +10,13 @@ import (
 
 type ReadHandler struct {
 	engine *engine.Engine
+	dim    int
 }
 
 func NewReadHandler(engine *engine.Engine) *ReadHandler {
 	return &ReadHandler{
 		engine: engine,
+		dim:    engine.GetDim(),
 	}
 }
 

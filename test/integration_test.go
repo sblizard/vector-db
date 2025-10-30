@@ -18,13 +18,13 @@ func setupTestServer(t *testing.T) (*httptest.Server, func()) {
 	tmpDir := t.TempDir()
 	store := storage.NewMetaStore(tmpDir)
 	layout := storage.NewLayout(tmpDir)
-	engine := engine.NewEngine(store, layout)
+	engine := engine.NewEngine(store, layout, 10, 3)
 
 	healthHandler := api.NewHandler(engine)
 	upsertHandler := handlers.NewUpsertHandler(engine)
 	readHandler := handlers.NewReadHandler(engine)
 	deleteHandler := handlers.NewDeleteHandler(engine)
-	searchHandler := handlers.NewSearchHandler(engine, 10)
+	searchHandler := handlers.NewSearchHandler(engine)
 
 	router := handlers.NewRouter(healthHandler, upsertHandler, readHandler, deleteHandler, searchHandler)
 	server := httptest.NewServer(router)
@@ -59,7 +59,7 @@ func TestIntegration_UpsertAndRetrieve(t *testing.T) {
 	// Test upsert
 	upsertReq := handlers.UpsertRequest{
 		ID:       "test_vec",
-		Vector:   []float32{1.0, 2.0, 3.0, 4.0},
+		Vector:   []float32{1.0, 2.0, 3.0},
 		Metadata: map[string]interface{}{"category": "test", "label": "sample"},
 	}
 
@@ -97,8 +97,8 @@ func TestIntegration_UpsertAndRetrieve(t *testing.T) {
 		t.Errorf("Expected ID 'test_vec', got '%s'", vec.ID)
 	}
 
-	if len(vec.Vector) != 4 {
-		t.Errorf("Expected vector length 4, got %d", len(vec.Vector))
+	if len(vec.Vector) != 3 {
+		t.Errorf("Expected vector length 3, got %d", len(vec.Vector))
 	}
 
 	if vec.Metadata["category"] != "test" {
@@ -229,7 +229,7 @@ func TestIntegration_ErrorHandling(t *testing.T) {
 	}{
 		{
 			name:           "missing ID",
-			request:        handlers.UpsertRequest{ID: "", Vector: []float32{1.0}},
+			request:        handlers.UpsertRequest{ID: "", Vector: []float32{1.0, 2.0, 3.0}},
 			expectedStatus: http.StatusCreated,
 		},
 		{
@@ -262,7 +262,7 @@ func TestIntegration_VectorNormalization(t *testing.T) {
 	// Insert a vector that's not normalized
 	upsertReq := handlers.UpsertRequest{
 		ID:       "norm_test",
-		Vector:   []float32{3.0, 4.0}, // Length = 5.0
+		Vector:   []float32{3.0, 4.0, 5.0}, // Length = sqrt(50)
 		Metadata: map[string]interface{}{"test": "normalization"},
 	}
 	body, _ := json.Marshal(upsertReq)
@@ -289,9 +289,9 @@ func TestIntegration_VectorNormalization(t *testing.T) {
 	vec := getAllResp.Vectors[0]
 
 	// Verify original vector is preserved
-	if vec.OriginalVector[0] != 3.0 || vec.OriginalVector[1] != 4.0 {
-		t.Errorf("Original vector not preserved: expected [3.0, 4.0], got [%f, %f]",
-			vec.OriginalVector[0], vec.OriginalVector[1])
+	if vec.OriginalVector[0] != 3.0 || vec.OriginalVector[1] != 4.0 || vec.OriginalVector[2] != 5.0 {
+		t.Errorf("Original vector not preserved: expected [3.0, 4.0, 5.0], got [%f, %f, %f]",
+			vec.OriginalVector[0], vec.OriginalVector[1], vec.OriginalVector[2])
 	}
 
 	// Verify normalized vector has unit length (sqrt(x^2 + y^2) = 1)
@@ -305,8 +305,8 @@ func TestIntegration_VectorNormalization(t *testing.T) {
 		t.Errorf("Expected normalized vector to have unit length, got length^2 = %f", sumSquares)
 	}
 
-	// Verify normalized values are correct: [3/5, 4/5] = [0.6, 0.8]
-	expectedNorm := []float32{0.6, 0.8}
+	// Verify normalized values are correct: (3/sqrt(50), 4/sqrt(50), 5/sqrt(50))
+	expectedNorm := []float32{3.0 / 7.07106781, 4.0 / 7.07106781, 5.0 / 7.07106781}
 	tolerance := float32(0.0001)
 	for i, expected := range expectedNorm {
 		diff := vec.Vector[i] - expected
@@ -346,14 +346,14 @@ func BenchmarkUpsert(b *testing.B) {
 	tmpDir := b.TempDir()
 	store := storage.NewMetaStore(tmpDir)
 	layout := storage.NewLayout(tmpDir)
-	engine := engine.NewEngine(store, layout)
+	engine := engine.NewEngine(store, layout, 10, 3)
 	defer func() { _ = store.Close() }()
 
 	healthHandler := api.NewHandler(engine)
 	upsertHandler := handlers.NewUpsertHandler(engine)
 	readHandler := handlers.NewReadHandler(engine)
 	deleteHandler := handlers.NewDeleteHandler(engine)
-	searchHandler := handlers.NewSearchHandler(engine, 10)
+	searchHandler := handlers.NewSearchHandler(engine)
 
 	router := handlers.NewRouter(healthHandler, upsertHandler, readHandler, deleteHandler, searchHandler)
 	server := httptest.NewServer(router)

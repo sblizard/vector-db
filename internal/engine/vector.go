@@ -98,7 +98,6 @@ func (e *Engine) GetAllVectors() (GetAllResponse, error) {
 		})
 	}
 
-	fmt.Printf("Returned %d vectors with metadata\n", len(vectors))
 	return GetAllResponse{Vectors: vectors}, nil
 }
 
@@ -152,7 +151,6 @@ func (e *Engine) Upsert(id string, vector []float32, metadata map[string]interfa
 		return isUpdate, fmt.Errorf("failed to store metadata: %v", err)
 	}
 
-	fmt.Printf("Successfully upserted vector: ID=%s, Dim=%d, IsUpdate=%v\n", id, len(vector), isUpdate)
 	return isUpdate, nil
 }
 
