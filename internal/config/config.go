@@ -14,21 +14,16 @@ type ServerConfig struct {
 }
 
 type Config struct {
-	Dim          int                `json:"dim"`
-	NumSubspaces int                `json:"num_subspaces"`
-	TopK         int                `json:"top_k"`
-	TopL         int                `json:"top_l"`
-	DataPath     string             `json:"data_path"`
-	DBPath       string             `json:"db_path"`
-	Server       ServerConfig       `json:"server"`
-	Storage      *storage.MetaStore `json:"-"`
-	Layout       *storage.Layout    `json:"-"`
-	Engine       *engine.Engine     `json:"-"`
+	Dim          int          `json:"dim"`
+	NumSubspaces int          `json:"num_subspaces"`
+	TopK         int          `json:"top_k"`
+	TopL         int          `json:"top_l"`
+	DataPath     string       `json:"data_path"`
+	DBPath       string       `json:"db_path"`
+	Server       ServerConfig `json:"server"`
 }
 
 func DefaultConfig() Config {
-	storageConfig := storage.NewMetaStore("./data/metadata.db")
-	layoutConfig := storage.NewLayout("./data")
 	return Config{
 		Dim:          128,
 		NumSubspaces: 16,
@@ -37,10 +32,14 @@ func DefaultConfig() Config {
 		DataPath:     "./data",
 		DBPath:       "./data/metadata.db",
 		Server:       ServerConfig{Port: 8080},
-		Storage:      storageConfig,
-		Layout:       layoutConfig,
-		Engine:       engine.NewEngine(storageConfig, layoutConfig),
 	}
+}
+
+func (c *Config) Initialize() (*storage.MetaStore, *storage.Layout, *engine.Engine, error) {
+	store := storage.NewMetaStore(c.DBPath)
+	layout := storage.NewLayout(c.DataPath)
+	eng := engine.NewEngine(store, layout, c.TopK, c.Dim)
+	return store, layout, eng, nil
 }
 
 func Load(path string) (Config, error) {

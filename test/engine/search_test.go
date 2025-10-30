@@ -11,7 +11,7 @@ func setupTestEngine(t *testing.T) (*engine.Engine, func()) {
 	tmpDir := t.TempDir()
 	store := storage.NewMetaStore(tmpDir)
 	layout := storage.NewLayout(tmpDir)
-	eng := engine.NewEngine(store, layout)
+	eng := engine.NewEngine(store, layout, 10, 3)
 
 	cleanup := func() {
 		_ = store.Close()

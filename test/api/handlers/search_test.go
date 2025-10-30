@@ -16,10 +16,10 @@ func setupTestSearchHandler(t *testing.T) (*handlers.UpsertHandler, *handlers.Se
 	tmpDir := t.TempDir()
 	store := storage.NewMetaStore(tmpDir)
 	layout := storage.NewLayout(tmpDir)
-	eng := engine.NewEngine(store, layout)
+	eng := engine.NewEngine(store, layout, 10, 3)
 
 	upsertHandler := handlers.NewUpsertHandler(eng)
-	searchHandler := handlers.NewSearchHandler(eng, 10)
+	searchHandler := handlers.NewSearchHandler(eng)
 
 	cleanup := func() {
 		_ = store.Close()

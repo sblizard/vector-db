@@ -1,5 +1,5 @@
 {
-  "dim": 768,
+  "dim": 128,
   "num_subspaces": 64,
   "top_k": 10,
   "top_l": 4,

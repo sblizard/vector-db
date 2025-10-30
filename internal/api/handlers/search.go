@@ -11,13 +11,15 @@ import (
 
 type SearchHandler struct {
 	engine *engine.Engine
+	dim    int
 	topK   int
 }
 
-func NewSearchHandler(engine *engine.Engine, topK int) *SearchHandler {
+func NewSearchHandler(engine *engine.Engine) *SearchHandler {
 	return &SearchHandler{
 		engine: engine,
-		topK:   topK,
+		dim:    engine.GetDim(),
+		topK:   engine.GetTopK(),
 	}
 }
 
@@ -30,7 +32,6 @@ func (h *SearchHandler) KClosestVectorsBruteHandler(w http.ResponseWriter, r *ht
 
 	query := req.Vector
 	k := req.TopK
-	fmt.Printf("TopK:\n%d\n", k)
 
 	closestVectors, err := h.engine.KClosestVectorsBrute(query, k)
 	if err != nil {

@@ -18,7 +18,7 @@ func setupTestHandlers(t *testing.T) (*handlers.UpsertHandler, *handlers.ReadHan
 	tmpDir := t.TempDir()
 	store := storage.NewMetaStore(tmpDir)
 	layout := storage.NewLayout(tmpDir)
-	engine := engine.NewEngine(store, layout)
+	engine := engine.NewEngine(store, layout, 10, 3)
 
 	upsertHandler := handlers.NewUpsertHandler(engine)
 	readHandler := handlers.NewReadHandler(engine)
@@ -185,8 +185,8 @@ func TestReadHandler_GetAllVectors_WithData(t *testing.T) {
 
 	// Insert test vectors
 	vectors := []handlers.UpsertRequest{
-		{ID: "vec1", Vector: []float32{1.0, 2.0}, Metadata: map[string]interface{}{"label": "a"}},
-		{ID: "vec2", Vector: []float32{3.0, 4.0}, Metadata: map[string]interface{}{"label": "b"}},
+		{ID: "vec1", Vector: []float32{1.0, 2.0, 3.0}, Metadata: map[string]interface{}{"label": "a"}},
+		{ID: "vec2", Vector: []float32{4.0, 5.0, 6.0}, Metadata: map[string]interface{}{"label": "b"}},
 	}
 
 	for _, req := range vectors {
@@ -481,8 +481,8 @@ func TestDeleteHandler_DeleteAllAndReInsert(t *testing.T) {
 
 	// Insert vectors
 	vectors := []handlers.UpsertRequest{
-		{ID: "vec1", Vector: []float32{1.0, 2.0}, Metadata: map[string]interface{}{"batch": "1"}},
-		{ID: "vec2", Vector: []float32{3.0, 4.0}, Metadata: map[string]interface{}{"batch": "1"}},
+		{ID: "vec1", Vector: []float32{1.0, 2.0, 3.0}, Metadata: map[string]interface{}{"batch": "1"}},
+		{ID: "vec2", Vector: []float32{4.0, 5.0, 6.0}, Metadata: map[string]interface{}{"batch": "1"}},
 	}
 
 	for _, req := range vectors {
@@ -503,8 +503,8 @@ func TestDeleteHandler_DeleteAllAndReInsert(t *testing.T) {
 
 	// Re-insert new vectors
 	newVectors := []handlers.UpsertRequest{
-		{ID: "vec3", Vector: []float32{5.0, 6.0}, Metadata: map[string]interface{}{"batch": "2"}},
-		{ID: "vec4", Vector: []float32{7.0, 8.0}, Metadata: map[string]interface{}{"batch": "2"}},
+		{ID: "vec3", Vector: []float32{5.0, 6.0, 1.0}, Metadata: map[string]interface{}{"batch": "2"}},
+		{ID: "vec4", Vector: []float32{7.0, 8.0, 1.0}, Metadata: map[string]interface{}{"batch": "2"}},
 	}
 
 	for _, req := range newVectors {
