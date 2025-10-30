@@ -67,13 +67,5 @@ func (h *UpsertHandler) extractUpsertParams(w http.ResponseWriter, r *http.Reque
 		req.ID = uuid.New().String()
 	}
 
-	if len(req.Vector) == 0 {
-		http.Error(w, "Vector data is required", http.StatusBadRequest)
-		return UpsertRequest{}, fmt.Errorf("vector data is required")
-	} else if len(req.Vector) != h.dim {
-		http.Error(w, fmt.Sprintf("Vector dimension mismatch: expected %d, got %d", h.dim, len(req.Vector)), http.StatusBadRequest)
-		return UpsertRequest{}, fmt.Errorf("vector dimension mismatch: expected %d, got %d", h.dim, len(req.Vector))
-	}
-
 	return req, nil
 }
